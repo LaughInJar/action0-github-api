@@ -63,18 +63,20 @@ class ListIssuesTestCase(unittest.TestCase):
             "&sort=comments&direction=asc&since=2026-08-01T00%3A00%3A00%2B00%3A00",
         )
 
-    def test_parses_into_issue_list(self) -> None:
+    def test_parses_into_issue_page(self) -> None:
         """
-        Test that a JSON array payload is parsed into a list of
+        Test that a JSON array payload is parsed into a
+        :py:class:`~action0.github.models.page.Page` of
         :py:class:`Issue`.
         """
         backend = StubBackend(Response(200, body=json.dumps([ISSUE_PAYLOAD])))
         client = GitHubClient(backend)
 
-        issues = client.send(ListIssues(owner="octo", repo="demo"))
+        page = client.send(ListIssues(owner="octo", repo="demo"))
 
-        self.assertEqual([issue.number for issue in issues], [1347])
-        self.assertIsInstance(issues[0], Issue)
+        self.assertEqual([issue.number for issue in page], [1347])
+        self.assertIsInstance(page[0], Issue)
+        self.assertIsNone(page.next)
 
 
 class CreateIssueTestCase(unittest.TestCase):

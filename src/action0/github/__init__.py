@@ -15,6 +15,7 @@ from .client import GitHubClient
 from .models import Issue
 from .models import IssueState
 from .models import Label
+from .models import Page
 from .models import Repo
 from .models import SimpleUser
 from .operations import CreateIssue
@@ -30,6 +31,9 @@ from .operations import PaginatedOperation
 from .operations import RepoSort
 from .operations import SortDirection
 from .operations import UserRepoType
+from .pagination import all_items
+from .pagination import all_items_async
+from .pagination import all_items_deferred
 
 __version__: str = "0.1.0"
 
@@ -47,10 +51,14 @@ __all__ = [
     "ListOrgRepos",
     "ListUserRepos",
     "OrgRepoType",
+    "Page",
     "PaginatedOperation",
     "Repo",
     "RepoSort",
     "SimpleUser",
     "SortDirection",
     "UserRepoType",
+    "all_items",
+    "all_items_async",
+    "all_items_deferred",
 ]

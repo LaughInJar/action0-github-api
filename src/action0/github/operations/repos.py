@@ -75,12 +75,12 @@ class GetRepo(GitHubOperation[Repo]):
         return Repo.from_json(data)
 
 
-class _ListRepos(PaginatedOperation[list[Repo]]):
+class _ListRepos(PaginatedOperation[Repo]):
     """
     The shared shape of the repository listings: sorting query fields
     (enums are serialized to their values, ``None`` fields are simply not
-    sent) on top of the pagination ones, and the JSON-array-of-repos
-    parsing.
+    sent) on top of the pagination ones, and pages of repositories as the
+    result.
     """
 
     sort: RepoSort | None = query(default=None)
@@ -90,12 +90,12 @@ class _ListRepos(PaginatedOperation[list[Repo]]):
     """The sort direction; GitHub's default is ``asc`` when :py:attr:`sort`
     is ``full_name``, ``desc`` otherwise."""
 
-    def load_json(self, data: Any) -> list[Repo]:
+    def load_item(self, data: Any) -> Repo:
         """
-        :param data: the decoded JSON payload (an array of repositories)
-        :return: the repositories of the requested page
+        :param data: one decoded JSON array item
+        :return: the repository
         """
-        return [Repo.from_json(item) for item in data]
+        return Repo.from_json(data)
 
 
 class ListOrgRepos(_ListRepos):

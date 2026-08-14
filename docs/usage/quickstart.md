@@ -63,13 +63,45 @@ falling back to GitHub's default:
 ```python
 from action0.github import ListOrgRepos, RepoSort, SortDirection
 
-repos = client.send(  # a list[Repo]
+repos = client.send(  # a Page[Repo] — sequence-like, iterate away
     ListOrgRepos(org="python", sort=RepoSort.PUSHED, direction=SortDirection.DESC, per_page=10)
 )
 ```
 
-Pagination is manual for now — pass `page=2` etc. (a paginator that
-follows the `Link` header is on the roadmap).
+## Pagination
+
+Listings return a {py:class}`~action0.github.models.page.Page`: it
+behaves like the list of its items, and its `next` attribute is the
+ready-to-send operation for the following page — present exactly when
+the response's `Link` header announced one, `None` on the last page.
+Pagination is plain data, so it works identically in every execution
+model:
+
+```python
+page = client.send(ListOrgRepos(org="python"))  # or await, or as a Deferred
+while True:
+    for repo in page:
+        ...
+    if page.next is None:
+        break
+    page = client.send(page.next)
+```
+
+The flattening helpers spare you the loop — one per execution model.
+`all_items` (sync) and `all_items_async` fetch pages lazily as the
+iteration proceeds; `all_items_deferred` gathers everything into one
+list (a Deferred cannot stream). Each page is one API request — mind
+the rate limit on huge listings:
+
+```python
+from action0.github import all_items, all_items_async, all_items_deferred
+
+for repo in all_items(client, ListOrgRepos(org="python")):  # sync
+    ...
+async for repo in all_items_async(client, ListOrgRepos(org="python")):  # asyncio
+    ...
+deferred = all_items_deferred(client, ListOrgRepos(org="python"))  # Twisted: Deferred[list[Repo]]
+```
 
 ## Working with issues
 
@@ -81,7 +113,7 @@ an issue — so filter via `is_pull_request`):
 from action0.github import IssueStateFilter, ListIssues
 
 issues = client.send(ListIssues(owner="python", repo="peps", state=IssueStateFilter.OPEN))
-real_issues = [i for i in issues if not i.is_pull_request]
+real_issues = [i for i in issues if not i.is_pull_request]  # one Page — follow .next for more
 ```
 
 {py:class}`~action0.github.operations.issues.CreateIssue` is the first

@@ -7,6 +7,7 @@ from action0.github import GetRepo
 from action0.github import GitHubClient
 from action0.github import ListOrgRepos
 from action0.github import ListUserRepos
+from action0.github import Page
 from action0.github import Repo
 from action0.github import RepoSort
 from action0.github import SortDirection
@@ -114,26 +115,52 @@ class ListReposTestCase(unittest.TestCase):
             "?per_page=100&page=2&sort=pushed&direction=desc&type=owner",
         )
 
-    def test_parses_into_repo_list(self) -> None:
+    def test_parses_into_repo_page(self) -> None:
         """
-        Test that a JSON array payload is parsed into a list of
-        :py:class:`Repo`.
+        Test that a JSON array payload is parsed into a
+        :py:class:`~action0.github.models.page.Page` of :py:class:`Repo` —
+        without a ``Link: rel="next"``, it is the last page.
         """
         second = dict(REPO_PAYLOAD, id=4534, name="peps", full_name="python/peps")
         backend = StubBackend(Response(200, body=json.dumps([REPO_PAYLOAD, second])))
         client = GitHubClient(backend)
 
-        repos = client.send(ListOrgRepos(org="python", sort=RepoSort.FULL_NAME))
+        page = client.send(ListOrgRepos(org="python", sort=RepoSort.FULL_NAME))
 
-        self.assertEqual([repo.full_name for repo in repos], ["python/cpython", "python/peps"])
-        for repo in repos:
+        self.assertIsInstance(page, Page)
+        self.assertEqual([repo.full_name for repo in page], ["python/cpython", "python/peps"])
+        for repo in page:
             self.assertIsInstance(repo, Repo)
+        self.assertIsNone(page.next)
+
+    def test_link_header_yields_next_operation(self) -> None:
+        """
+        Test that a ``Link: rel="next"`` response header turns into the
+        ready-to-send next-page operation — this operation with ``page``
+        incremented, all other fields kept.
+        """
+        backend = StubBackend(
+            Response(
+                200,
+                body=json.dumps([REPO_PAYLOAD]),
+                headers={"Link": '<https://api.github.com/x?page=3>; rel="next"'},
+            )
+        )
+        client = GitHubClient(backend)
+
+        page = client.send(ListOrgRepos(org="python", sort=RepoSort.FULL_NAME, page=2))
+
+        self.assertEqual(page.next, ListOrgRepos(org="python", sort=RepoSort.FULL_NAME, page=3))
 
     def test_parses_empty_page(self) -> None:
         """
-        Test that an empty page (past the last one) parses to an empty list.
+        Test that an empty page (past the last one) parses to an empty
+        page.
         """
         backend = StubBackend(Response(200, body="[]"))
         client = GitHubClient(backend)
 
-        self.assertEqual(client.send(ListOrgRepos(org="python", page=99)), [])
+        page = client.send(ListOrgRepos(org="python", page=99))
+
+        self.assertEqual(len(page), 0)
+        self.assertFalse(page)

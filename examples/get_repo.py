@@ -17,6 +17,7 @@ from action0.github import GitHubClient
 from action0.github import ListOrgRepos
 from action0.github import Repo
 from action0.github import RepoSort
+from action0.github import all_items
 
 
 def sync_usage() -> None:
@@ -82,9 +83,12 @@ def demo() -> None:
         "id": 101, "number": 1347, "title": "Found a bug", "state": "open",
         "html_url": "https://github.com/python/cpython/issues/1347", "user": null
     }"""
+    # a Link header on the first listing page announces the second one
+    next_link = '<https://api.github.com/orgs/python/repos?page=2>; rel="next"'
     backend = StubBackend(
         Response(200, body=payload),
-        Response(200, body=f"[{payload}]"),
+        Response(200, body=f"[{payload}]", headers={"Link": next_link}),
+        Response(200, body="[]"),
         Response(201, body=issue_payload),
     )
     client = GitHubClient(backend, token="ghp_secret")
@@ -92,8 +96,9 @@ def demo() -> None:
     repo = client.send(GetRepo(owner="python", repo="cpython"))
     print(repo.full_name, "-", repo.language, "-", repo.stargazers_count, "stars")
 
-    # the listings take enum filters — IDE completion knows the legal values
-    repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
+    # the listings take enum filters — IDE completion knows the legal
+    # values — and all_items follows the Link header across the pages
+    repos = all_items(client, ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
     print("repos of python:", [r.name for r in repos])
 
     # writes work the same: the typed fields become the JSON body
