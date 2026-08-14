@@ -34,12 +34,15 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import GetRepo, GitHubClient
+from action0.github import GetRepo, GitHubClient, ListOrgRepos, RepoSort
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
     repo = client.send(GetRepo(owner="python", repo="cpython"))
     print(repo.full_name, repo.language, repo.stargazers_count)
+
+    repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
+    print([r.name for r in repos])
 ```
 
 See the [quickstart](https://laughinjar.github.io/action0-github-api/usage/quickstart.html)
