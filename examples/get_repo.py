@@ -14,6 +14,7 @@ from __future__ import annotations
 from action0.github import CreateIssue
 from action0.github import GetRepo
 from action0.github import GitHubClient
+from action0.github import GitHubRetryPolicy
 from action0.github import ListOrgRepos
 from action0.github import Repo
 from action0.github import RepoSort
@@ -110,6 +111,23 @@ def demo() -> None:
     print("requests sent:")
     for request in backend.requests:
         print("  ", request.method, request.url.as_str())
+
+    # rate limits: the GitHub-tuned policy waits out a rate-limited 403
+    # (fake clock and sleep here) and retries — the second attempt wins
+    from action0.client import RetryingSyncBackend
+
+    rate_limited = Response(
+        403,
+        body='{"message": "API rate limit exceeded"}',
+        headers={"x-ratelimit-remaining": "0", "x-ratelimit-reset": "30"},
+    )
+    retrying = RetryingSyncBackend(
+        StubBackend(rate_limited, Response(200, body=payload)),
+        GitHubRetryPolicy(clock=lambda: 0.0),
+        sleep=lambda seconds: print(f"rate limited - waiting {seconds:.0f}s (pretend)"),
+    )
+    retrying_client = GitHubClient(retrying, token="ghp_secret")
+    print("after retry:", retrying_client.send(GetRepo(owner="python", repo="cpython")).full_name)
 
 
 if __name__ == "__main__":

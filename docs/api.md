@@ -17,6 +17,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+## `action0.github.retry`
+
+```{eval-rst}
+.. automodule:: action0.github.retry
+   :members:
+```
+
 ## `action0.github.operations`
 
 ```{eval-rst}
