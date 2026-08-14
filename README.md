@@ -30,10 +30,27 @@ Pick the extra matching the HTTP backend you want to run on (the stdlib
 uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [twisted], [all]
 ```
 
+## Usage
+
+```python
+from action0.client.backends.requests import RequestsBackend
+from action0.github import GetRepo, GitHubClient
+
+with RequestsBackend() as backend:
+    client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
+    repo = client.send(GetRepo(owner="python", repo="cpython"))
+    print(repo.full_name, repo.language, repo.stargazers_count)
+```
+
+See the [quickstart](https://laughinjar.github.io/action0-github-api/usage/quickstart.html)
+for asyncio/Twisted usage, authentication, GitHub Enterprise Server and
+testing without network — and `examples/get_repo.py` for a complete,
+runnable example.
+
 ## Status
 
-Under construction — the project scaffold is in place, the first
-operations are being built. Documentation:
+Under construction — the first operations are in place and the endpoint
+coverage grows from here. Documentation:
 <https://laughinjar.github.io/action0-github-api/>
 
 ## License
