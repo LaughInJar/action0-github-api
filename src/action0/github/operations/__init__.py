@@ -17,10 +17,14 @@ from .repos import ListUserRepos
 from .repos import OrgRepoType
 from .repos import RepoSort
 from .repos import UserRepoType
+from .users import GetAuthenticatedUser
+from .users import GetUser
 
 __all__ = [
     "CreateIssue",
+    "GetAuthenticatedUser",
     "GetRepo",
+    "GetUser",
     "GitHubOperation",
     "IssueSort",
     "IssueStateFilter",

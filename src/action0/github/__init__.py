@@ -18,8 +18,11 @@ from .models import Label
 from .models import Page
 from .models import Repo
 from .models import SimpleUser
+from .models import User
 from .operations import CreateIssue
+from .operations import GetAuthenticatedUser
 from .operations import GetRepo
+from .operations import GetUser
 from .operations import GitHubOperation
 from .operations import IssueSort
 from .operations import IssueStateFilter
@@ -40,7 +43,9 @@ __version__: str = "0.1.0"
 
 __all__ = [
     "CreateIssue",
+    "GetAuthenticatedUser",
     "GetRepo",
+    "GetUser",
     "GitHubClient",
     "GitHubOperation",
     "GitHubRetryPolicy",
@@ -59,6 +64,7 @@ __all__ = [
     "RepoSort",
     "SimpleUser",
     "SortDirection",
+    "User",
     "UserRepoType",
     "all_items",
     "all_items_async",

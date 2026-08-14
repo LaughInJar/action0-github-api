@@ -51,6 +51,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.operations.users`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.users
+   :members:
+```
+
 ### `action0.github.operations.links`
 
 ```{eval-rst}

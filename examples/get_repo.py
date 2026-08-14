@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from action0.github import CreateIssue
 from action0.github import GetRepo
+from action0.github import GetUser
 from action0.github import GitHubClient
 from action0.github import GitHubRetryPolicy
 from action0.github import ListOrgRepos
@@ -86,11 +87,17 @@ def demo() -> None:
     }"""
     # a Link header on the first listing page announces the second one
     next_link = '<https://api.github.com/orgs/python/repos?page=2>; rel="next"'
+    user_payload = """{
+        "login": "gvanrossum", "id": 2894642, "type": "User",
+        "html_url": "https://github.com/gvanrossum",
+        "name": "Guido van Rossum", "followers": 20000
+    }"""
     backend = StubBackend(
         Response(200, body=payload),
         Response(200, body=f"[{payload}]", headers={"Link": next_link}),
         Response(200, body="[]"),
         Response(201, body=issue_payload),
+        Response(200, body=user_payload),
     )
     client = GitHubClient(backend, token="ghp_secret")
 
@@ -107,6 +114,9 @@ def demo() -> None:
         CreateIssue(owner="python", repo="cpython", title="Found a bug", labels=["bug"])
     )
     print("created issue:", issue.number, issue.state)
+
+    user = client.send(GetUser(username="gvanrossum"))
+    print("user:", user.name, "-", user.followers, "followers")
 
     print("requests sent:")
     for request in backend.requests:
