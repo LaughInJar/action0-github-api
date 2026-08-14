@@ -17,6 +17,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+## `action0.github.conditional`
+
+```{eval-rst}
+.. automodule:: action0.github.conditional
+   :members:
+```
+
 ## `action0.github.retry`
 
 ```{eval-rst}

@@ -63,10 +63,15 @@ issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", 
 ```
 
 Rate limits are handled by wrapping the backend with action0-client's
-retrying wrapper and the GitHub-tuned policy:
+retrying wrapper and the GitHub-tuned policy — and saved in the first
+place by the conditional-requests hook, which revalidates via `ETag`
+(GitHub's 304 answers don't count against the rate limit):
 
 ```python
-backend = RetryingSyncBackend(RequestsBackend(), GitHubRetryPolicy())
+backend = RetryingSyncBackend(
+    RequestsBackend(hooks=[ConditionalRequestsHook()]),
+    GitHubRetryPolicy(),
+)
 client = GitHubClient(backend, token="ghp_...")
 ```
 

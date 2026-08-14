@@ -11,6 +11,7 @@ Run it (no network involved, the demo uses the stub backend)::
 
 from __future__ import annotations
 
+from action0.github import ConditionalRequestsHook
 from action0.github import CreateIssue
 from action0.github import GetRepo
 from action0.github import GetUser
@@ -145,6 +146,20 @@ def demo() -> None:
     )
     retrying_client = GitHubClient(retrying, token="ghp_secret")
     print("after retry:", retrying_client.send(GetRepo(owner="python", repo="cpython")).full_name)
+
+    # conditional requests: the second fetch revalidates with If-None-Match
+    # and GitHub's 304 answer (free, rate-limit-wise) is filled from the store
+    conditional = StubBackend(
+        Response(200, body=payload, headers={"ETag": '"abc"'}),
+        Response(304),
+        hooks=[ConditionalRequestsHook()],
+    )
+    conditional_client = GitHubClient(conditional)
+    print("fetched:", conditional_client.send(GetRepo(owner="python", repo="cpython")).language)
+    print(
+        "revalidated:", conditional_client.send(GetRepo(owner="python", repo="cpython")).language
+    )
+    print("second request sent If-None-Match:", conditional.requests[1].headers["If-None-Match"])
 
 
 if __name__ == "__main__":

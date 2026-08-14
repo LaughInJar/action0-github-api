@@ -210,6 +210,34 @@ primary window is waited out until `x-ratelimit-reset` — capped at
 `RetryingAsyncBackend` / `RetryingDeferredBackend` for the other
 execution models — the policy is the same.
 
+## Conditional requests — free revalidation
+
+GitHub answers most GETs with an `ETag`; repeat the request with
+`If-None-Match` and an unchanged resource comes back as `304 Not
+Modified` — **without counting against the primary rate limit**.
+{py:class}`~action0.github.conditional.ConditionalRequestsHook` does
+this transparently: it stores ETagged responses, attaches the validators,
+and fills a 304 from the store, so your operations only ever see the 200.
+It is a hook, not a backend wrapper — one instance drives sync, async and
+Twisted backends alike:
+
+```python
+from action0.client.backends.requests import RequestsBackend
+from action0.github import ConditionalRequestsHook, GitHubClient
+
+backend = RequestsBackend(hooks=[ConditionalRequestsHook()])
+client = GitHubClient(backend, token="ghp_...")
+
+repo = client.send(GetRepo(owner="python", repo="cpython"))  # 200, stored
+repo = client.send(GetRepo(owner="python", repo="cpython"))  # 304 → served from the store
+```
+
+Entries vary on `Accept` and `Authorization` (a different token is a
+different entry) and live in an in-memory LRU by default — pass any
+{py:class}`~action0.client.caching.CacheStore` to share or persist them.
+Combine with {py:class}`~action0.client.caching.CachingSyncBackend` and
+hot data skips even the revalidation for the cache's TTL.
+
 ## Testing your code
 
 No network needed: the stub backends of
