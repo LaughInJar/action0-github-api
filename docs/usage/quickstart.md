@@ -127,6 +127,22 @@ issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", 
 print(issue.number, issue.html_url)  # the server-assigned number and URL
 ```
 
+## Users
+
+{py:class}`~action0.github.operations.users.GetUser` fetches a public
+profile; {py:class}`~action0.github.operations.users.GetAuthenticatedUser`
+the one behind the client's token — both as the full
+{py:class}`~action0.github.models.user.User` model (a `SimpleUser`
+subclass, so it fits wherever an embedded user is expected):
+
+```python
+from action0.github import GetAuthenticatedUser, GetUser
+
+user = client.send(GetUser(username="gvanrossum"))
+me = client.send(GetAuthenticatedUser())  # requires a token
+print(user.name, user.followers, me.login)
+```
+
 ## Authentication
 
 Pass a token — classic, fine-grained or app installation — and it is sent

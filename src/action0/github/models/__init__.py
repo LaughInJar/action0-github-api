@@ -11,6 +11,7 @@ from .label import Label
 from .page import Page
 from .repo import Repo
 from .user import SimpleUser
+from .user import User
 
 __all__ = [
     "Issue",
@@ -19,4 +20,5 @@ __all__ = [
     "Page",
     "Repo",
     "SimpleUser",
+    "User",
 ]
