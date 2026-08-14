@@ -8,6 +8,7 @@ schemas, not every last one.
 from .issue import Issue
 from .issue import IssueState
 from .label import Label
+from .page import Page
 from .repo import Repo
 from .user import SimpleUser
 
@@ -15,6 +16,7 @@ __all__ = [
     "Issue",
     "IssueState",
     "Label",
+    "Page",
     "Repo",
     "SimpleUser",
 ]

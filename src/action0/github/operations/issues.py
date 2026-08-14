@@ -34,7 +34,7 @@ class IssueSort(StrEnum):
     COMMENTS = "comments"
 
 
-class ListIssues(PaginatedOperation[list[Issue]]):
+class ListIssues(PaginatedOperation[Issue]):
     """
     ``GET /repos/{owner}/{repo}/issues`` — list a repository's issues.
 
@@ -69,12 +69,12 @@ class ListIssues(PaginatedOperation[list[Issue]]):
     since: datetime | None = query(default=None)
     """Only issues updated at or after this time (serialized to ISO 8601)."""
 
-    def load_json(self, data: Any) -> list[Issue]:
+    def load_item(self, data: Any) -> Issue:
         """
-        :param data: the decoded JSON payload (an array of issues)
-        :return: the issues of the requested page
+        :param data: one decoded JSON array item
+        :return: the issue
         """
-        return [Issue.from_json(item) for item in data]
+        return Issue.from_json(data)
 
 
 class CreateIssue(GitHubOperation[Issue]):

@@ -34,7 +34,7 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, GetRepo, GitHubClient, ListOrgRepos, RepoSort
+from action0.github import CreateIssue, GetRepo, GitHubClient, ListOrgRepos, RepoSort, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -42,7 +42,10 @@ with RequestsBackend() as backend:
     print(repo.full_name, repo.language, repo.stargazers_count)
 
     repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
-    print([r.name for r in repos])
+    print([r.name for r in repos])  # one Page[Repo]; repos.next is the next page's operation
+
+    for repo in all_items(client, ListOrgRepos(org="python")):  # or follow all pages lazily
+        print(repo.full_name)
 ```
 
 Writing works the same way — the typed fields become the JSON body
