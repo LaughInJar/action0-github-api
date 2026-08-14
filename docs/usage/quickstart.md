@@ -71,6 +71,30 @@ repos = client.send(  # a list[Repo]
 Pagination is manual for now — pass `page=2` etc. (a paginator that
 follows the `Link` header is on the roadmap).
 
+## Working with issues
+
+{py:class}`~action0.github.operations.issues.ListIssues` filters the same
+way (note: GitHub returns pull requests here too — every pull request is
+an issue — so filter via `is_pull_request`):
+
+```python
+from action0.github import IssueStateFilter, ListIssues
+
+issues = client.send(ListIssues(owner="python", repo="peps", state=IssueStateFilter.OPEN))
+real_issues = [i for i in issues if not i.is_pull_request]
+```
+
+{py:class}`~action0.github.operations.issues.CreateIssue` is the first
+write operation: its non-path fields become the JSON request body
+(`None` fields are omitted), and it needs a token with write access:
+
+```python
+from action0.github import CreateIssue
+
+issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", labels=["bug"]))
+print(issue.number, issue.html_url)  # the server-assigned number and URL
+```
+
 ## Authentication
 
 Pass a token — classic, fine-grained or app installation — and it is sent

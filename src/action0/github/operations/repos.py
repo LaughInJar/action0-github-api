@@ -11,6 +11,18 @@ from action0.req import Method
 
 from ..models.repo import Repo
 from .base import GitHubOperation
+from .base import PaginatedOperation
+from .base import SortDirection
+
+__all__ = [
+    "GetRepo",
+    "ListOrgRepos",
+    "ListUserRepos",
+    "OrgRepoType",
+    "RepoSort",
+    "SortDirection",  # re-exported: it moved to .base when the issues listings arrived
+    "UserRepoType",
+]
 
 
 class RepoSort(StrEnum):
@@ -20,13 +32,6 @@ class RepoSort(StrEnum):
     UPDATED = "updated"
     PUSHED = "pushed"
     FULL_NAME = "full_name"
-
-
-class SortDirection(StrEnum):
-    """The sort direction of a listing."""
-
-    ASC = "asc"
-    DESC = "desc"
 
 
 class OrgRepoType(StrEnum):
@@ -70,11 +75,12 @@ class GetRepo(GitHubOperation[Repo]):
         return Repo.from_json(data)
 
 
-class _ListRepos(GitHubOperation[list[Repo]]):
+class _ListRepos(PaginatedOperation[list[Repo]]):
     """
-    The shared shape of the repository listings: sorting and pagination
-    query fields (enums are serialized to their values, ``None`` fields
-    are simply not sent) and the JSON-array-of-repos parsing.
+    The shared shape of the repository listings: sorting query fields
+    (enums are serialized to their values, ``None`` fields are simply not
+    sent) on top of the pagination ones, and the JSON-array-of-repos
+    parsing.
     """
 
     sort: RepoSort | None = query(default=None)
@@ -83,12 +89,6 @@ class _ListRepos(GitHubOperation[list[Repo]]):
     direction: SortDirection | None = query(default=None)
     """The sort direction; GitHub's default is ``asc`` when :py:attr:`sort`
     is ``full_name``, ``desc`` otherwise."""
-
-    per_page: int = query(default=30)
-    """The page size (GitHub caps it at 100)."""
-
-    page: int = query(default=1)
-    """The page number, starting at 1 — pagination is manual for now."""
 
     def load_json(self, data: Any) -> list[Repo]:
         """
@@ -104,7 +104,7 @@ class ListOrgRepos(_ListRepos):
 
     >>> operation = ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=5)
     >>> operation.as_request("https://api.github.com").url.as_str()
-    'https://api.github.com/orgs/python/repos?sort=pushed&per_page=5&page=1'
+    'https://api.github.com/orgs/python/repos?per_page=5&page=1&sort=pushed'
     """
 
     method = Method.GET

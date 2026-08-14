@@ -6,19 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
+from .timestamps import timestamp
 from .user import SimpleUser
-
-
-def _timestamp(value: str | None) -> datetime | None:
-    """
-    Parse one of GitHub's ISO 8601 timestamps (``2008-06-11T21:19:53Z``).
-
-    :param value: the timestamp string, or ``None`` where GitHub sends null
-    :return: the parsed datetime (timezone-aware), or ``None``
-    """
-    if value is None:
-        return None
-    return datetime.fromisoformat(value)
 
 
 @dataclass
@@ -105,7 +94,7 @@ class Repo:
             open_issues_count=data.get("open_issues_count", 0),
             topics=list(topics) if topics is not None else None,
             archived=data.get("archived", False),
-            created_at=_timestamp(data.get("created_at")),
-            updated_at=_timestamp(data.get("updated_at")),
-            pushed_at=_timestamp(data.get("pushed_at")),
+            created_at=timestamp(data.get("created_at")),
+            updated_at=timestamp(data.get("updated_at")),
+            pushed_at=timestamp(data.get("pushed_at")),
         )

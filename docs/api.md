@@ -30,6 +30,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.operations.issues`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.issues
+   :members:
+```
+
 ## `action0.github.models`
 
 ```{eval-rst}
@@ -47,5 +54,26 @@ Everything below is importable from the package root, e.g.
 
 ```{eval-rst}
 .. automodule:: action0.github.models.repo
+   :members:
+```
+
+### `action0.github.models.label`
+
+```{eval-rst}
+.. automodule:: action0.github.models.label
+   :members:
+```
+
+### `action0.github.models.issue`
+
+```{eval-rst}
+.. automodule:: action0.github.models.issue
+   :members:
+```
+
+### `action0.github.models.timestamps`
+
+```{eval-rst}
+.. automodule:: action0.github.models.timestamps
    :members:
 ```
