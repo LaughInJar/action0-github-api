@@ -11,6 +11,7 @@ Run it (no network involved, the demo uses the stub backend)::
 
 from __future__ import annotations
 
+from action0.github import CreateIssue
 from action0.github import GetRepo
 from action0.github import GitHubClient
 from action0.github import ListOrgRepos
@@ -77,8 +78,15 @@ def demo() -> None:
         "private": false, "html_url": "https://github.com/python/cpython",
         "default_branch": "main", "language": "Python", "stargazers_count": 60000
     }"""
-    listing = f"[{payload}]"
-    backend = StubBackend(Response(200, body=payload), Response(200, body=listing))
+    issue_payload = """{
+        "id": 101, "number": 1347, "title": "Found a bug", "state": "open",
+        "html_url": "https://github.com/python/cpython/issues/1347", "user": null
+    }"""
+    backend = StubBackend(
+        Response(200, body=payload),
+        Response(200, body=f"[{payload}]"),
+        Response(201, body=issue_payload),
+    )
     client = GitHubClient(backend, token="ghp_secret")
 
     repo = client.send(GetRepo(owner="python", repo="cpython"))
@@ -87,6 +95,12 @@ def demo() -> None:
     # the listings take enum filters — IDE completion knows the legal values
     repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
     print("repos of python:", [r.name for r in repos])
+
+    # writes work the same: the typed fields become the JSON body
+    issue = client.send(
+        CreateIssue(owner="python", repo="cpython", title="Found a bug", labels=["bug"])
+    )
+    print("created issue:", issue.number, issue.state)
 
     print("requests sent:")
     for request in backend.requests:

@@ -12,13 +12,21 @@ static types follow it.
 """
 
 from .client import GitHubClient
+from .models import Issue
+from .models import IssueState
+from .models import Label
 from .models import Repo
 from .models import SimpleUser
+from .operations import CreateIssue
 from .operations import GetRepo
 from .operations import GitHubOperation
+from .operations import IssueSort
+from .operations import IssueStateFilter
+from .operations import ListIssues
 from .operations import ListOrgRepos
 from .operations import ListUserRepos
 from .operations import OrgRepoType
+from .operations import PaginatedOperation
 from .operations import RepoSort
 from .operations import SortDirection
 from .operations import UserRepoType
@@ -26,12 +34,20 @@ from .operations import UserRepoType
 __version__: str = "0.1.0"
 
 __all__ = [
+    "CreateIssue",
     "GetRepo",
     "GitHubClient",
     "GitHubOperation",
+    "Issue",
+    "IssueSort",
+    "IssueState",
+    "IssueStateFilter",
+    "Label",
+    "ListIssues",
     "ListOrgRepos",
     "ListUserRepos",
     "OrgRepoType",
+    "PaginatedOperation",
     "Repo",
     "RepoSort",
     "SimpleUser",

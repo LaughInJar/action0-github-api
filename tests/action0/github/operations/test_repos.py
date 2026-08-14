@@ -109,8 +109,9 @@ class ListReposTestCase(unittest.TestCase):
 
         self.assertEqual(
             request.url.as_str(),
+            # per_page/page first: they live on the PaginatedOperation base
             "https://api.github.com/users/gvanrossum/repos"
-            "?sort=pushed&direction=desc&per_page=100&page=2&type=owner",
+            "?per_page=100&page=2&sort=pushed&direction=desc&type=owner",
         )
 
     def test_parses_into_repo_list(self) -> None:

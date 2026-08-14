@@ -34,7 +34,7 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import GetRepo, GitHubClient, ListOrgRepos, RepoSort
+from action0.github import CreateIssue, GetRepo, GitHubClient, ListOrgRepos, RepoSort
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -43,6 +43,13 @@ with RequestsBackend() as backend:
 
     repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
     print([r.name for r in repos])
+```
+
+Writing works the same way — the typed fields become the JSON body
+(needs a token):
+
+```python
+issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", labels=["bug"]))
 ```
 
 See the [quickstart](https://laughinjar.github.io/action0-github-api/usage/quickstart.html)
