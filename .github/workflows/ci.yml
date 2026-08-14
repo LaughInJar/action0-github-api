@@ -57,6 +57,9 @@ jobs:
       - name: pytest
         run: uv run pytest
 
+      - name: example demo
+        run: uv run python examples/get_repo.py
+
   docs:
     name: docs build
     runs-on: ubuntu-latest

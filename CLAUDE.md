@@ -40,11 +40,14 @@ uv build               # build sdist + wheel into dist/
 
 ## Architecture
 
-The layout under `src/action0/github/` (grows with the implementation):
+The layout under `src/action0/github/` (grows with the implementation; see action0-client's docs for the underlying concepts):
 
 - `__init__.py` — package root, single-sourced `__version__`, re-exports the public API via `__all__`.
+- `client.py` — `GitHubClient(APIClient[BackendT_co])`: base URL (overridable for GitHub Enterprise Server), optional bearer token, and GitHub's recommended default headers (`Accept: application/vnd.github+json`, `X-GitHub-Api-Version`, `User-Agent` — required by GitHub) as gap-filling defaults. Imports `__version__` lazily inside `__init__` (the package root imports this module, so a module-level import would be circular).
+- `operations/` — one module per GitHub resource area, one operation class per endpoint. `base.py` defines `GitHubOperation(JsonOperation[R_co])`, which pins `accept = "application/vnd.github+json"` — this must live on the operation, not only as a client default, because `as_request` sets the operation's `Accept` before the client's gap-filling defaults run (JsonOperation's plain `application/json` would win otherwise). `repos.py`: `GetRepo`.
+- `models/` — plain dataclasses (no validation library, by design — the whole family is dependency-light), one module per model, each with a typed `from_json` classmethod covering the commonly used fields of the GitHub schema (unknown keys ignored, optionals via `.get`). `user.py`: `SimpleUser`; `repo.py`: `Repo` (ISO 8601 timestamps parsed to aware datetimes; `pushed_at` is null on empty repos).
 
-Planned shape (see action0-client's docs for the underlying concepts): a `GitHubClient` subclassing `action0.client.APIClient` (auth token via `prepare()` override, `Accept: application/vnd.github+json` and `X-GitHub-Api-Version` defaults), one module per GitHub resource area with `JsonOperation` subclasses (path templates + field specifiers) and typed result dataclasses built in `load_json`.
+`examples/get_repo.py` is the complete worked example (type-checked in CI via mypy's `files`, runnable without network — CI runs it).
 
 Conventions:
 

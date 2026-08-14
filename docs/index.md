@@ -11,13 +11,25 @@ value, an `Awaitable` or a `Deferred`, depending on the backend.
 uv add "action0-github-api[httpx]"
 ```
 
+```python
+client = GitHubClient(RequestsBackend())
+repo = client.send(GetRepo(owner="python", repo="cpython"))  # Repo
+
+client = GitHubClient(AsyncHttpxBackend())
+repo = await client.send(GetRepo(owner="python", repo="cpython"))  # Awaitable[Repo]
+
+client = GitHubClient(TwistedBackend())
+deferred = client.send(GetRepo(owner="python", repo="cpython"))  # Deferred[Repo]
+```
+
 ```{note}
-This project is under construction — the first operations are being
-built. The pages below grow with the implementation.
+This project is under construction — the first operations are in place
+and the endpoint coverage grows from here.
 ```
 
 ```{toctree}
 :maxdepth: 2
 
+usage/index
 api
 ```
