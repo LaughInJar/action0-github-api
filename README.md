@@ -35,7 +35,7 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 ```python
 from action0.client.backends.requests import RequestsBackend
 from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient
-from action0.github import ListOrgRepos, RepoSort, all_items
+from action0.github import ListOrgRepos, RepoSearchSort, RepoSort, SearchRepos, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -50,6 +50,9 @@ with RequestsBackend() as backend:
 
     user = client.send(GetUser(username="gvanrossum"))
     print(user.name, user.followers)
+
+    hits = client.send(SearchRepos(q="http client language:python", sort=RepoSearchSort.STARS))
+    print(hits.total_count, [r.full_name for r in hits])
 ```
 
 Writing works the same way — the typed fields become the JSON body

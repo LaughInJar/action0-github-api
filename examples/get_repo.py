@@ -18,7 +18,9 @@ from action0.github import GitHubClient
 from action0.github import GitHubRetryPolicy
 from action0.github import ListOrgRepos
 from action0.github import Repo
+from action0.github import RepoSearchSort
 from action0.github import RepoSort
+from action0.github import SearchRepos
 from action0.github import all_items
 
 
@@ -98,6 +100,7 @@ def demo() -> None:
         Response(200, body="[]"),
         Response(201, body=issue_payload),
         Response(200, body=user_payload),
+        Response(200, body=f'{{"total_count": 1234, "items": [{payload}]}}'),
     )
     client = GitHubClient(backend, token="ghp_secret")
 
@@ -117,6 +120,10 @@ def demo() -> None:
 
     user = client.send(GetUser(username="gvanrossum"))
     print("user:", user.name, "-", user.followers, "followers")
+
+    # search results come in an envelope: a SearchPage with total_count
+    hits = client.send(SearchRepos(q="language:python", sort=RepoSearchSort.STARS))
+    print("search:", hits.total_count, "matches, first page:", [r.name for r in hits])
 
     print("requests sent:")
     for request in backend.requests:

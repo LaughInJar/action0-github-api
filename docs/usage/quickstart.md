@@ -103,6 +103,22 @@ async for repo in all_items_async(client, ListOrgRepos(org="python")):  # asynci
 deferred = all_items_deferred(client, ListOrgRepos(org="python"))  # Twisted: Deferred[list[Repo]]
 ```
 
+## Searching
+
+{py:class}`~action0.github.operations.search.SearchRepos` takes GitHub's
+[query syntax](https://docs.github.com/en/search-github/searching-on-github/searching-for-repositories)
+and returns a {py:class}`~action0.github.models.search.SearchPage` — a
+`Page` plus the search envelope (`total_count`, `incomplete_results`).
+It paginates like the listings (`next`, or the `all_items` helpers;
+GitHub caps search results at 1000 items):
+
+```python
+from action0.github import RepoSearchSort, SearchRepos
+
+hits = client.send(SearchRepos(q="http client language:python", sort=RepoSearchSort.STARS))
+print(hits.total_count, [r.full_name for r in hits])
+```
+
 ## Working with issues
 
 {py:class}`~action0.github.operations.issues.ListIssues` filters the same

@@ -23,11 +23,11 @@ from typing import cast
 
 from action0.client import APIClient
 from action0.client import Backend
+from action0.client import Operation
 from action0.req import Response
 
 from .models.page import ItemT
 from .models.page import Page
-from .operations.base import PaginatedOperation
 
 if TYPE_CHECKING:
     # twisted is an optional dependency: only the type checker sees this
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 def all_items(
     client: APIClient[Backend[Response]],
-    operation: PaginatedOperation[ItemT],
+    operation: Operation[Page[ItemT]],
 ) -> Iterator[ItemT]:
     """
     Iterate over all items of a listing, lazily following the pages
@@ -57,7 +57,7 @@ def all_items(
 
 async def all_items_async(
     client: APIClient[Backend[Awaitable[Response]]],
-    operation: PaginatedOperation[ItemT],
+    operation: Operation[Page[ItemT]],
 ) -> AsyncIterator[ItemT]:
     """
     Iterate over all items of a listing, lazily following the pages
@@ -79,7 +79,7 @@ async def all_items_async(
 
 def all_items_deferred(
     client: APIClient[Backend[Deferred[Response]]],
-    operation: PaginatedOperation[ItemT],
+    operation: Operation[Page[ItemT]],
 ) -> Deferred[list[ItemT]]:
     """
     Collect all items of a listing, following the pages (Twisted

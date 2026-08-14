@@ -17,6 +17,7 @@ from .models import IssueState
 from .models import Label
 from .models import Page
 from .models import Repo
+from .models import SearchPage
 from .models import SimpleUser
 from .models import User
 from .operations import CreateIssue
@@ -31,7 +32,10 @@ from .operations import ListOrgRepos
 from .operations import ListUserRepos
 from .operations import OrgRepoType
 from .operations import PaginatedOperation
+from .operations import RepoSearchSort
 from .operations import RepoSort
+from .operations import SearchOperation
+from .operations import SearchRepos
 from .operations import SortDirection
 from .operations import UserRepoType
 from .pagination import all_items
@@ -61,7 +65,11 @@ __all__ = [
     "Page",
     "PaginatedOperation",
     "Repo",
+    "RepoSearchSort",
     "RepoSort",
+    "SearchOperation",
+    "SearchPage",
+    "SearchRepos",
     "SimpleUser",
     "SortDirection",
     "User",

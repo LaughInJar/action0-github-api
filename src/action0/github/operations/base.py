@@ -22,6 +22,36 @@ from .links import links
 R_co = TypeVar("R_co", covariant=True)
 """The parsed result type of a GitHub operation."""
 
+PageT = TypeVar("PageT", bound=Page[Any])
+"""A page result — :py:class:`~action0.github.models.page.Page` or a
+subclass like :py:class:`~action0.github.models.search.SearchPage`."""
+
+
+def attach_next(operation: Any, page: PageT, response: Response) -> PageT:
+    """
+    Attach the next-page operation to a freshly parsed page: a copy of
+    the given operation with its ``page`` field incremented — exactly
+    when the response's ``Link`` header announces a ``rel="next"``
+    (GitHub's authoritative end-of-listing signal).
+
+    ``dataclasses.replace`` keeps the page's concrete type, so subclasses
+    like :py:class:`~action0.github.models.search.SearchPage` pass
+    through with their extra fields intact.
+
+    :param operation: the operation that produced the page — any
+                      operation dataclass with a ``page`` field (typed
+                      ``Any``: "has a page field" spans the unrelated
+                      :py:class:`PaginatedOperation` and
+                      :py:class:`~action0.github.operations.search.SearchOperation`
+                      hierarchies)
+    :param page: the parsed page, ``next`` not yet set
+    :param response: the response it was parsed from
+    :return: the page, with ``next`` attached if there is one
+    """
+    if "next" in links(response):
+        return replace(page, next=replace(operation, page=operation.page + 1))
+    return page
+
 
 class SortDirection(StrEnum):
     """The sort direction of a listing."""
@@ -93,7 +123,4 @@ class PaginatedOperation(GitHubOperation[Page[ItemT]]):
         :param response: the response, already vetted
         :return: the page
         """
-        page = super().load(response)
-        if "next" in links(response):
-            return Page(items=page.items, next=replace(self, page=self.page + 1))
-        return page
+        return attach_next(self, super().load(response), response)

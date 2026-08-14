@@ -10,6 +10,7 @@ from .issue import IssueState
 from .label import Label
 from .page import Page
 from .repo import Repo
+from .search import SearchPage
 from .user import SimpleUser
 from .user import User
 
@@ -19,6 +20,7 @@ __all__ = [
     "Label",
     "Page",
     "Repo",
+    "SearchPage",
     "SimpleUser",
     "User",
 ]
