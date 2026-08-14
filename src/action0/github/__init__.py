@@ -34,6 +34,7 @@ from .operations import UserRepoType
 from .pagination import all_items
 from .pagination import all_items_async
 from .pagination import all_items_deferred
+from .retry import GitHubRetryPolicy
 
 __version__: str = "0.1.0"
 
@@ -42,6 +43,7 @@ __all__ = [
     "GetRepo",
     "GitHubClient",
     "GitHubOperation",
+    "GitHubRetryPolicy",
     "Issue",
     "IssueSort",
     "IssueState",

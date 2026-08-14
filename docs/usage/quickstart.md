@@ -154,6 +154,30 @@ Non-2xx responses raise {py:class}`~action0.client.errors.APIError` (with
 {py:class}`~action0.client.errors.TransportError` — see the
 [action0-client error guide](https://laughinjar.github.io/action0-client/usage/errors.html).
 
+## Retries and rate limits
+
+Wrap the backend in action0-client's retrying wrapper (the variant
+matching your execution model) and hand it the GitHub-tuned policy:
+
+```python
+from action0.client import RetryingSyncBackend
+from action0.client.backends.requests import RequestsBackend
+from action0.github import GitHubClient, GitHubRetryPolicy
+
+backend = RetryingSyncBackend(RequestsBackend(), GitHubRetryPolicy())
+client = GitHubClient(backend, token="ghp_...")
+```
+
+{py:class}`~action0.github.retry.GitHubRetryPolicy` keeps the base
+behavior (transient 5xx/429, `Retry-After` honored, idempotent methods
+only — a `CreateIssue` is never blindly repeated) and adds GitHub's
+rate-limit signals: a 403 is retried only when it actually is a rate
+limit (`Retry-After` or `x-ratelimit-remaining: 0`), and an exhausted
+primary window is waited out until `x-ratelimit-reset` — capped at
+`max_backoff` (default 120s; raise it to sit out whole windows). Use
+`RetryingAsyncBackend` / `RetryingDeferredBackend` for the other
+execution models — the policy is the same.
+
 ## Testing your code
 
 No network needed: the stub backends of

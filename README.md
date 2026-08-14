@@ -55,6 +55,14 @@ Writing works the same way — the typed fields become the JSON body
 issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", labels=["bug"]))
 ```
 
+Rate limits are handled by wrapping the backend with action0-client's
+retrying wrapper and the GitHub-tuned policy:
+
+```python
+backend = RetryingSyncBackend(RequestsBackend(), GitHubRetryPolicy())
+client = GitHubClient(backend, token="ghp_...")
+```
+
 See the [quickstart](https://laughinjar.github.io/action0-github-api/usage/quickstart.html)
 for asyncio/Twisted usage, authentication, GitHub Enterprise Server and
 testing without network — and `examples/get_repo.py` for a complete,
