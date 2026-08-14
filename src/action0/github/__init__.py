@@ -12,6 +12,8 @@ static types follow it.
 """
 
 from .client import GitHubClient
+from .conditional import GITHUB_CONDITIONAL_POLICY
+from .conditional import ConditionalRequestsHook
 from .models import Issue
 from .models import IssueState
 from .models import Label
@@ -46,7 +48,9 @@ from .retry import GitHubRetryPolicy
 __version__: str = "0.1.0"
 
 __all__ = [
+    "ConditionalRequestsHook",
     "CreateIssue",
+    "GITHUB_CONDITIONAL_POLICY",
     "GetAuthenticatedUser",
     "GetRepo",
     "GetUser",
