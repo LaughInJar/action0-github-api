@@ -52,6 +52,25 @@ deferred.addCallback(lambda repo: print(repo.full_name))
 `examples/get_repo.py` in the repository shows all three side by side and
 a runnable, network-free demo.
 
+## Listing repositories
+
+{py:class}`~action0.github.operations.repos.ListOrgRepos` and
+{py:class}`~action0.github.operations.repos.ListUserRepos` show the query
+side: every filter value is an enum — your IDE completes the legal values,
+no GitHub docs lookup needed — and a `None` filter is simply not sent,
+falling back to GitHub's default:
+
+```python
+from action0.github import ListOrgRepos, RepoSort, SortDirection
+
+repos = client.send(  # a list[Repo]
+    ListOrgRepos(org="python", sort=RepoSort.PUSHED, direction=SortDirection.DESC, per_page=10)
+)
+```
+
+Pagination is manual for now — pass `page=2` etc. (a paginator that
+follows the `Link` header is on the roadmap).
+
 ## Authentication
 
 Pass a token — classic, fine-grained or app installation — and it is sent

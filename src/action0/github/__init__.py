@@ -16,6 +16,12 @@ from .models import Repo
 from .models import SimpleUser
 from .operations import GetRepo
 from .operations import GitHubOperation
+from .operations import ListOrgRepos
+from .operations import ListUserRepos
+from .operations import OrgRepoType
+from .operations import RepoSort
+from .operations import SortDirection
+from .operations import UserRepoType
 
 __version__: str = "0.1.0"
 
@@ -23,6 +29,12 @@ __all__ = [
     "GetRepo",
     "GitHubClient",
     "GitHubOperation",
+    "ListOrgRepos",
+    "ListUserRepos",
+    "OrgRepoType",
     "Repo",
+    "RepoSort",
     "SimpleUser",
+    "SortDirection",
+    "UserRepoType",
 ]

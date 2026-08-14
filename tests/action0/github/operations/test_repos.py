@@ -5,7 +5,12 @@ from action0.client import APIError
 from action0.client.testing import StubBackend
 from action0.github import GetRepo
 from action0.github import GitHubClient
+from action0.github import ListOrgRepos
+from action0.github import ListUserRepos
 from action0.github import Repo
+from action0.github import RepoSort
+from action0.github import SortDirection
+from action0.github import UserRepoType
 from action0.req import Response
 
 REPO_PAYLOAD = {
@@ -68,3 +73,66 @@ class GetRepoTestCase(unittest.TestCase):
         response = caught.exception.response
         assert response is not None  # narrows the Optional for the type checkers
         self.assertEqual(response.status, 404)
+
+
+class ListReposTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.repos.ListOrgRepos`
+    and :py:class:`action0.github.operations.repos.ListUserRepos`
+    """
+
+    def test_request_defaults(self) -> None:
+        """
+        Test the default request: the ``None`` filters are omitted, the
+        pagination defaults are sent.
+        """
+        request = ListOrgRepos(org="python").as_request("https://api.github.com")
+
+        self.assertEqual(request.method, "GET")
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/orgs/python/repos?per_page=30&page=1",
+        )
+
+    def test_request_enums_serialize_to_values(self) -> None:
+        """
+        Test that the enum query fields end up as their wire values.
+        """
+        request = ListUserRepos(
+            username="gvanrossum",
+            type=UserRepoType.OWNER,
+            sort=RepoSort.PUSHED,
+            direction=SortDirection.DESC,
+            per_page=100,
+            page=2,
+        ).as_request("https://api.github.com")
+
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/users/gvanrossum/repos"
+            "?sort=pushed&direction=desc&per_page=100&page=2&type=owner",
+        )
+
+    def test_parses_into_repo_list(self) -> None:
+        """
+        Test that a JSON array payload is parsed into a list of
+        :py:class:`Repo`.
+        """
+        second = dict(REPO_PAYLOAD, id=4534, name="peps", full_name="python/peps")
+        backend = StubBackend(Response(200, body=json.dumps([REPO_PAYLOAD, second])))
+        client = GitHubClient(backend)
+
+        repos = client.send(ListOrgRepos(org="python", sort=RepoSort.FULL_NAME))
+
+        self.assertEqual([repo.full_name for repo in repos], ["python/cpython", "python/peps"])
+        for repo in repos:
+            self.assertIsInstance(repo, Repo)
+
+    def test_parses_empty_page(self) -> None:
+        """
+        Test that an empty page (past the last one) parses to an empty list.
+        """
+        backend = StubBackend(Response(200, body="[]"))
+        client = GitHubClient(backend)
+
+        self.assertEqual(client.send(ListOrgRepos(org="python", page=99)), [])

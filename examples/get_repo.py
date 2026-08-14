@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from action0.github import GetRepo
 from action0.github import GitHubClient
+from action0.github import ListOrgRepos
 from action0.github import Repo
+from action0.github import RepoSort
 
 
 def sync_usage() -> None:
@@ -75,15 +77,20 @@ def demo() -> None:
         "private": false, "html_url": "https://github.com/python/cpython",
         "default_branch": "main", "language": "Python", "stargazers_count": 60000
     }"""
-    backend = StubBackend(Response(200, body=payload))
+    listing = f"[{payload}]"
+    backend = StubBackend(Response(200, body=payload), Response(200, body=listing))
     client = GitHubClient(backend, token="ghp_secret")
 
     repo = client.send(GetRepo(owner="python", repo="cpython"))
     print(repo.full_name, "-", repo.language, "-", repo.stargazers_count, "stars")
-    print("request sent:")
-    request = backend.requests[0]
-    print("  ", request.method, request.url.as_str())
-    print("   Accept:", request.headers["Accept"])
+
+    # the listings take enum filters — IDE completion knows the legal values
+    repos = client.send(ListOrgRepos(org="python", sort=RepoSort.PUSHED, per_page=10))
+    print("repos of python:", [r.name for r in repos])
+
+    print("requests sent:")
+    for request in backend.requests:
+        print("  ", request.method, request.url.as_str())
 
 
 if __name__ == "__main__":
