@@ -17,6 +17,9 @@ from .repos import ListUserRepos
 from .repos import OrgRepoType
 from .repos import RepoSort
 from .repos import UserRepoType
+from .search import RepoSearchSort
+from .search import SearchOperation
+from .search import SearchRepos
 from .users import GetAuthenticatedUser
 from .users import GetUser
 
@@ -33,7 +36,10 @@ __all__ = [
     "ListUserRepos",
     "OrgRepoType",
     "PaginatedOperation",
+    "RepoSearchSort",
     "RepoSort",
+    "SearchOperation",
+    "SearchRepos",
     "SortDirection",
     "UserRepoType",
 ]
