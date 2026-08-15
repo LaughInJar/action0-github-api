@@ -34,7 +34,8 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CompareCommits, CreateIssue, DownloadReleaseAsset, GetLatestRelease
+from action0.github import CompareCommits, CreateIssue, CreateOrUpdateFile
+from action0.github import DownloadReleaseAsset, GetCombinedStatus, GetLatestRelease
 from action0.github import GetRateLimit, GetReadme, GetRepo, GetUser, GitHubClient, IssueState
 from action0.github import IssueStateReason, ListCommits, ListOrgRepos, ListPulls, MergeMethod
 from action0.github import MergePull, PullStateFilter, RepoSearchSort, RepoSort, SearchRepos
@@ -89,8 +90,15 @@ issue = client.send(
     )
 )
 
-result = client.send(  # pull requests merge the same way
+status = client.send(GetCombinedStatus(owner="octo", repo="demo", ref="main"))
+result = client.send(  # merge once the statuses and checks are green
     MergePull(owner="octo", repo="demo", pull_number=42, merge_method=MergeMethod.SQUASH)
+)
+
+written = client.send(  # committing a file is one call — raw bytes in, base64 on the wire
+    CreateOrUpdateFile(
+        owner="octo", repo="demo", file_path="docs/note.md", message="Add note", content=b"# Hi\n"
+    )
 )
 ```
 
@@ -134,10 +142,13 @@ runnable example.
 
 ## Status
 
-The core resource areas are covered: repositories (incl. contents),
-issues (incl. comments, labels, milestones, assignees), pull requests
-(incl. merging and reviews), commits, releases (incl. streaming asset
-down- and uploads), users, organizations, search and rate limits.
+The core resource areas are covered: repositories (contents incl.
+file writes, branches, tags, topics, languages, contributors,
+collaborators), issues (comments, labels, milestones, assignees —
+each fully manageable), pull requests (merging, reviews incl. line
+comments, review requests), commits (incl. statuses and check runs),
+releases (CRUD, generated notes, streaming asset down- and uploads),
+users, organizations, search and rate limits.
 Documentation: <https://laughinjar.github.io/action0-github-api/>
 
 ## License

@@ -240,6 +240,35 @@ milestones = client.send(ListMilestones(owner="octo", repo="demo"))
 print([m.title for m in milestones], [label.name for label in labels])
 ```
 
+Both vocabularies are fully manageable too:
+{py:class}`~action0.github.operations.labels.CreateLabel` /
+{py:class}`~action0.github.operations.labels.UpdateLabel` (renaming
+goes through `new_name` and cascades to every issue) /
+{py:class}`~action0.github.operations.labels.DeleteLabel`, and
+{py:class}`~action0.github.operations.milestones.CreateMilestone` /
+{py:class}`~action0.github.operations.milestones.UpdateMilestone` /
+{py:class}`~action0.github.operations.milestones.DeleteMilestone`
+(deleting a milestone leaves its issues in place, unassigned):
+
+```python
+from datetime import datetime, timezone
+from action0.github import CreateMilestone, IssueState, UpdateMilestone
+
+milestone = client.send(
+    CreateMilestone(
+        owner="octo",
+        repo="demo",
+        title="v1.0",
+        due_on=datetime(2026, 10, 9, tzinfo=timezone.utc),
+    )
+)
+milestone = client.send(
+    UpdateMilestone(
+        owner="octo", repo="demo", milestone_number=milestone.number, state=IssueState.CLOSED
+    )
+)
+```
+
 ## Pull requests
 
 {py:class}`~action0.github.operations.pulls.ListPulls` lists a
@@ -323,6 +352,51 @@ review = client.send(
     CreatePullReview(owner="octo", repo="demo", pull_number=42, event=ReviewEvent.APPROVE)
 )
 print(review.state)  # ReviewState.APPROVED
+```
+
+Line comments come in two shapes:
+{py:class}`~action0.github.operations.reviews.CreateReviewComment` for
+one standalone comment, or a batch of
+{py:class}`~action0.github.operations.reviews.DraftReviewComment`
+entries submitted *with* a review — one review, one notification,
+however many comments (`side` says which half of the diff:
+`RIGHT` = the new code):
+
+```python
+from action0.github import DraftReviewComment, ReviewSide
+
+review = client.send(
+    CreatePullReview(
+        owner="octo",
+        repo="demo",
+        pull_number=42,
+        event=ReviewEvent.REQUEST_CHANGES,
+        body="Two problems inline.",
+        commit_id=pull.head.sha,
+        comments=[
+            DraftReviewComment(path="src/app.py", body="Off by one.", line=28),
+            DraftReviewComment(
+                path="src/app.py", body="Reads twice.", line=40, side=ReviewSide.RIGHT
+            ),
+        ],
+    )
+)
+```
+
+And the review *requests*:
+{py:class}`~action0.github.operations.reviews.RequestReviewers` asks
+users or teams for a review,
+{py:class}`~action0.github.operations.reviews.RemoveRequestedReviewers`
+withdraws the ask — both answer with the pull request and its updated
+`requested_reviewers`:
+
+```python
+from action0.github import RequestReviewers
+
+pull = client.send(
+    RequestReviewers(owner="octo", repo="demo", pull_number=42, reviewers=["octocat"])
+)
+print([user.login for user in pull.requested_reviewers])
 ```
 
 ## Commits
@@ -414,6 +488,105 @@ from action0.github import GetReadme
 
 readme = client.send(GetReadme(owner="python", repo="peps"))
 print(readme.name, len(readme.text))
+```
+
+Writing goes through the same API — every call is one commit.
+{py:class}`~action0.github.operations.contents.CreateOrUpdateFile`
+takes *raw bytes*; the base64 transport encoding is applied on
+serialization. Create and update are the same endpoint, told apart by
+`sha`: `None` creates (422 if the file exists), the file's current blob
+sha updates (409 if someone else wrote in between — optimistic locking
+for free). {py:class}`~action0.github.operations.contents.DeleteFile`
+deletes, also as a commit:
+
+```python
+from action0.github import CreateOrUpdateFile, DeleteFile
+
+written = client.send(
+    CreateOrUpdateFile(
+        owner="octo",
+        repo="demo",
+        file_path="docs/note.md",
+        message="Add a note",
+        content=b"# Note\n",  # raw bytes in, base64 on the wire
+    )
+)
+print(written.commit.sha, written.content.sha if written.content else None)
+
+client.send(
+    DeleteFile(
+        owner="octo",
+        repo="demo",
+        file_path="docs/note.md",
+        message="Remove the note",
+        sha=written.content.sha if written.content else "",
+    )
+)
+```
+
+## Branches, tags and repository metadata
+
+{py:class}`~action0.github.operations.branches.ListBranches` /
+{py:class}`~action0.github.operations.branches.GetBranch` and
+{py:class}`~action0.github.operations.repos.ListRepoTags` cover the
+refs; around them, one call each for the contributor list, the
+language breakdown and the topics:
+
+```python
+from action0.github import GetBranch, ListBranches, ListRepoTags
+
+branches = client.send(ListBranches(owner="python", repo="peps", protected=True))
+main = client.send(GetBranch(owner="python", repo="peps", branch="main"))
+print([b.name for b in branches], main.sha)  # GetBranch carries the full tip commit
+
+tags = client.send(ListRepoTags(owner="python", repo="cpython", per_page=5))
+print([(t.name, t.sha[:7]) for t in tags])
+```
+
+```python
+from action0.github import GetRepoTopics, ListContributors, ListLanguages, ReplaceRepoTopics
+
+top = client.send(ListContributors(owner="python", repo="peps"))
+print([(c.login, c.contributions) for c in top[:3]])
+print(client.send(ListLanguages(owner="python", repo="peps")))  # {"Python": 512000, ...}
+print(client.send(GetRepoTopics(owner="octo", repo="demo")))
+# ReplaceRepoTopics(names=[...]) swaps the whole set — there is no incremental add
+```
+
+{py:class}`~action0.github.operations.collaborators.ListCollaborators`
+lists who has access (needs push access itself) and
+{py:class}`~action0.github.operations.collaborators.GetCollaboratorPermission`
+answers with the plain permission string:
+
+```python
+from action0.github import CollaboratorAffiliation, GetCollaboratorPermission, ListCollaborators
+
+outside = client.send(
+    ListCollaborators(owner="octo", repo="demo", affiliation=CollaboratorAffiliation.OUTSIDE)
+)
+print(client.send(GetCollaboratorPermission(owner="octo", repo="demo", username="octocat")))
+# write
+```
+
+## Is this commit green?
+
+Two APIs answer that, and both matter:
+{py:class}`~action0.github.operations.statuses.GetCombinedStatus` for
+the classic commit statuses (one rolled-up state over all contexts)
+and {py:class}`~action0.github.operations.checks.ListCheckRunsForRef`
+for the Checks API — GitHub Actions reports *there*, not in the
+statuses. The check-runs listing is the one whose payload is not a
+bare array; GitHub's `{total_count, check_runs}` envelope is unwrapped
+into the usual page:
+
+```python
+from action0.github import GetCombinedStatus, ListCheckRunsForRef, StatusState
+
+combined = client.send(GetCombinedStatus(owner="octo", repo="demo", ref=pull.head.sha))
+checks = client.send(ListCheckRunsForRef(owner="octo", repo="demo", ref=pull.head.sha))
+green = combined.state == StatusState.SUCCESS and all(
+    run.conclusion == "success" for run in checks
+)
 ```
 
 ## Organizations
@@ -547,6 +720,22 @@ from action0.github import GetAuthenticatedUser, GetUser
 user = client.send(GetUser(username="gvanrossum"))
 me = client.send(GetAuthenticatedUser())  # requires a token
 print(user.name, user.followers, me.login)
+```
+
+{py:class}`~action0.github.operations.users.ListFollowers` pages
+through a user's followers, and
+{py:class}`~action0.github.operations.users.ListUserOrgs` through
+their public organization memberships — the entries are
+{py:class}`~action0.github.models.org.SimpleOrganization` (the
+membership payloads carry no profile fields, not even a web URL), so
+follow up with `GetOrg` for the full profile:
+
+```python
+from action0.github import ListFollowers, ListUserOrgs
+
+followers = client.send(ListFollowers(username="gvanrossum"))
+orgs = client.send(ListUserOrgs(username="gvanrossum"))
+print(len(followers), [org.login for org in orgs])
 ```
 
 ## Authentication

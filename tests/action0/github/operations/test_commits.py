@@ -10,6 +10,8 @@ from action0.github import ComparisonStatus
 from action0.github import GetCommit
 from action0.github import GitHubClient
 from action0.github import ListCommits
+from action0.github import ListPullsForCommit
+from action0.github import PullRequest
 from action0.req import Response
 
 COMMIT_PAYLOAD = {
@@ -179,3 +181,43 @@ class CompareCommitsTestCase(unittest.TestCase):
         self.assertIsInstance(comparison, Comparison)
         self.assertEqual(comparison.status, ComparisonStatus.AHEAD)
         self.assertEqual(comparison.commits[0].sha, COMMIT_PAYLOAD["sha"])
+
+
+class ListPullsForCommitTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.commits.ListPullsForCommit`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test the reverse lookup: sha in, pull requests out.
+        """
+        payload = [
+            {
+                "id": 201,
+                "number": 12,
+                "title": "Amazing new feature",
+                "state": "closed",
+                "html_url": "https://github.com/octo/demo/pull/12",
+                "head": {"label": "octo:topic", "ref": "topic", "sha": "aa218f56"},
+                "base": {"label": "octo:main", "ref": "main", "sha": "6dcb09b5"},
+            }
+        ]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(
+            ListPullsForCommit(
+                owner="octo",
+                repo="demo",
+                commit_sha="6dcb09b5b57875f334f61aebed695e2e4193db5e",
+            )
+        )
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/commits/"
+            "6dcb09b5b57875f334f61aebed695e2e4193db5e/pulls?per_page=30&page=1",
+        )
+        self.assertEqual([pull.number for pull in page], [12])
+        self.assertIsInstance(page[0], PullRequest)

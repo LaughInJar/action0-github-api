@@ -11,6 +11,7 @@ from action0.req import Method
 
 from ..models.label import Label
 from .base import GitHubOperation
+from .base import NoContentOperation
 from .base import PaginatedOperation
 
 
@@ -88,3 +89,85 @@ class RemoveIssueLabel(GitHubOperation[list[Label]]):
         :return: the issue's remaining label set
         """
         return [Label.from_json(item) for item in data]
+
+
+class CreateLabel(GitHubOperation[Label]):
+    """
+    ``POST /repos/{owner}/{repo}/labels`` — create a repository label
+    (requires a token with write access; 422 if the name is taken).
+    """
+
+    method = Method.POST
+    path = "/repos/{owner}/{repo}/labels"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    name: str = json_field()
+    """The label name (emoji and unicode are fine)."""
+
+    color: str | None = json_field(default=None)
+    """The 6-character hex color code *without* the leading ``#``;
+    ``None`` lets GitHub pick one."""
+
+    description: str | None = json_field(default=None)
+    """The description shown in the label picker."""
+
+    def load_json(self, data: Any) -> Label:
+        """
+        :param data: the decoded JSON payload
+        :return: the created label
+        """
+        return Label.from_json(data)
+
+
+class UpdateLabel(GitHubOperation[Label]):
+    """
+    ``PATCH /repos/{owner}/{repo}/labels/{name}`` — update a label.
+    PATCH semantics; renaming goes through :py:attr:`new_name` (the
+    current name addresses the label in the path) and cascades to every
+    issue carrying the label.
+    """
+
+    method = Method.PATCH
+    path = "/repos/{owner}/{repo}/labels/{name}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    name: str = path_param()
+    """The label's current name."""
+
+    new_name: str | None = json_field(default=None)
+    """The new name; ``None`` keeps the current one."""
+
+    color: str | None = json_field(default=None)
+    """The new hex color code (no leading ``#``); ``None`` keeps the
+    current one."""
+
+    description: str | None = json_field(default=None)
+    """The new description; ``None`` keeps the current one."""
+
+    def load_json(self, data: Any) -> Label:
+        """
+        :param data: the decoded JSON payload
+        :return: the updated label
+        """
+        return Label.from_json(data)
+
+
+class DeleteLabel(NoContentOperation):
+    """
+    ``DELETE /repos/{owner}/{repo}/labels/{name}`` — delete a label
+    from the repository (removing it from every issue). Answers
+    ``204``.
+    """
+
+    method = Method.DELETE
+    path = "/repos/{owner}/{repo}/labels/{name}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    name: str = path_param()
+    """The label name to delete."""

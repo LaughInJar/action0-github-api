@@ -1,4 +1,5 @@
-"""The organization model (:py:class:`Organization`)."""
+"""The organization models (:py:class:`Organization`,
+:py:class:`SimpleOrganization`)."""
 
 from __future__ import annotations
 
@@ -7,6 +8,39 @@ from datetime import datetime
 from typing import Any
 
 from .timestamps import timestamp
+
+
+@dataclass
+class SimpleOrganization:
+    """
+    An organization as GitHub's membership listings send it
+    (``organization-simple`` — notably *without* profile fields or even
+    an ``html_url``). Fetch the full :py:class:`Organization` via
+    :py:class:`~action0.github.operations.orgs.GetOrg` when needed.
+    """
+
+    login: str
+    """The organization's login name."""
+
+    id: int
+    """The numeric organization id."""
+
+    description: str | None = None
+    """The description, if set."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> SimpleOrganization:
+        """
+        Build a membership entry from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the organization entry
+        """
+        return cls(
+            login=data["login"],
+            id=data["id"],
+            description=data.get("description"),
+        )
 
 
 @dataclass

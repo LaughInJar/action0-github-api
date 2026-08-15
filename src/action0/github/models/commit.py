@@ -1,4 +1,5 @@
-"""The commit models (:py:class:`Commit`, :py:class:`GitIdentity`, :py:class:`CommitFile`)."""
+"""The commit models (:py:class:`Commit`, :py:class:`GitCommit`,
+:py:class:`GitIdentity`, :py:class:`CommitFile`)."""
 
 from __future__ import annotations
 
@@ -55,6 +56,55 @@ class GitIdentity:
             name=data["name"],
             email=data["email"],
             date=timestamp(data.get("date")),
+        )
+
+
+@dataclass
+class GitCommit:
+    """
+    A git-level commit object — flat, with ``message`` and the
+    identities at the top level. This is what the write endpoints (e.g.
+    :py:class:`~action0.github.operations.contents.CreateOrUpdateFile`)
+    return, as opposed to the API-level :py:class:`Commit` wrapper the
+    listing/fetch endpoints use (which nests these fields under a
+    ``commit`` key).
+    """
+
+    sha: str
+    """The full commit sha."""
+
+    message: str
+    """The commit message."""
+
+    html_url: str | None = None
+    """The web URL of the commit."""
+
+    author: GitIdentity | None = None
+    """Who wrote the change."""
+
+    committer: GitIdentity | None = None
+    """Who committed it."""
+
+    parents: list[str] = field(default_factory=list)
+    """The parent commit shas."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> GitCommit:
+        """
+        Build a git commit from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the commit
+        """
+        author = data.get("author")
+        committer = data.get("committer")
+        return cls(
+            sha=data["sha"],
+            message=data["message"],
+            html_url=data.get("html_url"),
+            author=GitIdentity.from_json(author) if author is not None else None,
+            committer=GitIdentity.from_json(committer) if committer is not None else None,
+            parents=[parent["sha"] for parent in data.get("parents", [])],
         )
 
 
