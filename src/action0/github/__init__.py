@@ -14,6 +14,12 @@ static types follow it.
 from .client import GitHubClient
 from .conditional import GITHUB_CONDITIONAL_POLICY
 from .conditional import ConditionalRequestsHook
+from .models import Commit
+from .models import CommitFile
+from .models import CommitFileStatus
+from .models import Comparison
+from .models import ComparisonStatus
+from .models import GitIdentity
 from .models import Issue
 from .models import IssueComment
 from .models import IssueState
@@ -29,11 +35,13 @@ from .models import Repo
 from .models import SearchPage
 from .models import SimpleUser
 from .models import User
+from .operations import CompareCommits
 from .operations import CreateIssue
 from .operations import CreateIssueComment
 from .operations import CreatePull
 from .operations import DownloadReleaseAsset
 from .operations import GetAuthenticatedUser
+from .operations import GetCommit
 from .operations import GetIssue
 from .operations import GetLatestRelease
 from .operations import GetPull
@@ -46,6 +54,7 @@ from .operations import IssueSearchSort
 from .operations import IssueSort
 from .operations import IssueStateFilter
 from .operations import IssueStateReason
+from .operations import ListCommits
 from .operations import ListIssueComments
 from .operations import ListIssues
 from .operations import ListOrgRepos
@@ -74,6 +83,12 @@ from .retry import GitHubRetryPolicy
 __version__: str = "0.1.0"
 
 __all__ = [
+    "Commit",
+    "CommitFile",
+    "CommitFileStatus",
+    "CompareCommits",
+    "Comparison",
+    "ComparisonStatus",
     "ConditionalRequestsHook",
     "CreateIssue",
     "CreateIssueComment",
@@ -81,6 +96,7 @@ __all__ = [
     "DownloadReleaseAsset",
     "GITHUB_CONDITIONAL_POLICY",
     "GetAuthenticatedUser",
+    "GetCommit",
     "GetIssue",
     "GetLatestRelease",
     "GetPull",
@@ -91,6 +107,7 @@ __all__ = [
     "GitHubClient",
     "GitHubOperation",
     "GitHubRetryPolicy",
+    "GitIdentity",
     "Issue",
     "IssueComment",
     "IssueSearchSort",
@@ -99,6 +116,7 @@ __all__ = [
     "IssueStateFilter",
     "IssueStateReason",
     "Label",
+    "ListCommits",
     "ListIssueComments",
     "ListIssues",
     "ListOrgRepos",

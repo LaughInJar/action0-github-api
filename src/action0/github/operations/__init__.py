@@ -7,6 +7,9 @@ subclass per endpoint.
 from .base import GitHubOperation
 from .base import PaginatedOperation
 from .base import SortDirection
+from .commits import CompareCommits
+from .commits import GetCommit
+from .commits import ListCommits
 from .issues import CreateIssue
 from .issues import CreateIssueComment
 from .issues import GetIssue
@@ -43,11 +46,13 @@ from .users import GetAuthenticatedUser
 from .users import GetUser
 
 __all__ = [
+    "CompareCommits",
     "CreateIssue",
     "CreateIssueComment",
     "CreatePull",
     "DownloadReleaseAsset",
     "GetAuthenticatedUser",
+    "GetCommit",
     "GetIssue",
     "GetLatestRelease",
     "GetPull",
@@ -60,6 +65,7 @@ __all__ = [
     "IssueSort",
     "IssueStateFilter",
     "IssueStateReason",
+    "ListCommits",
     "ListIssueComments",
     "ListIssues",
     "ListOrgRepos",

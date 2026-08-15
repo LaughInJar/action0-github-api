@@ -6,6 +6,12 @@ schemas, not every last one.
 """
 
 from .comment import IssueComment
+from .commit import Commit
+from .commit import CommitFile
+from .commit import CommitFileStatus
+from .commit import GitIdentity
+from .comparison import Comparison
+from .comparison import ComparisonStatus
 from .issue import Issue
 from .issue import IssueState
 from .label import Label
@@ -22,6 +28,12 @@ from .user import SimpleUser
 from .user import User
 
 __all__ = [
+    "Commit",
+    "CommitFile",
+    "CommitFileStatus",
+    "Comparison",
+    "ComparisonStatus",
+    "GitIdentity",
     "Issue",
     "IssueComment",
     "IssueState",
