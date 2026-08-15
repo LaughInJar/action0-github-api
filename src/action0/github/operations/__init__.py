@@ -11,6 +11,11 @@ from .issues import CreateIssue
 from .issues import IssueSort
 from .issues import IssueStateFilter
 from .issues import ListIssues
+from .pulls import CreatePull
+from .pulls import GetPull
+from .pulls import ListPulls
+from .pulls import PullSort
+from .pulls import PullStateFilter
 from .repos import GetRepo
 from .repos import ListOrgRepos
 from .repos import ListUserRepos
@@ -25,7 +30,9 @@ from .users import GetUser
 
 __all__ = [
     "CreateIssue",
+    "CreatePull",
     "GetAuthenticatedUser",
+    "GetPull",
     "GetRepo",
     "GetUser",
     "GitHubOperation",
@@ -33,9 +40,12 @@ __all__ = [
     "IssueStateFilter",
     "ListIssues",
     "ListOrgRepos",
+    "ListPulls",
     "ListUserRepos",
     "OrgRepoType",
     "PaginatedOperation",
+    "PullSort",
+    "PullStateFilter",
     "RepoSearchSort",
     "RepoSort",
     "SearchOperation",

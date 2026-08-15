@@ -34,8 +34,9 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient
-from action0.github import ListOrgRepos, RepoSearchSort, RepoSort, SearchRepos, all_items
+from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient, ListOrgRepos
+from action0.github import ListPulls, PullStateFilter, RepoSearchSort, RepoSort
+from action0.github import SearchRepos, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -47,6 +48,9 @@ with RequestsBackend() as backend:
 
     for repo in all_items(client, ListOrgRepos(org="python")):  # or follow all pages lazily
         print(repo.full_name)
+
+    pulls = client.send(ListPulls(owner="python", repo="peps", state=PullStateFilter.OPEN))
+    print([p.title for p in pulls if not p.draft])  # p.head/p.base name the branches
 
     user = client.send(GetUser(username="gvanrossum"))
     print(user.name, user.followers)

@@ -9,6 +9,8 @@ from .issue import Issue
 from .issue import IssueState
 from .label import Label
 from .page import Page
+from .pull import PullRequest
+from .pull import PullRequestRef
 from .repo import Repo
 from .search import SearchPage
 from .user import SimpleUser
@@ -19,6 +21,8 @@ __all__ = [
     "IssueState",
     "Label",
     "Page",
+    "PullRequest",
+    "PullRequestRef",
     "Repo",
     "SearchPage",
     "SimpleUser",
