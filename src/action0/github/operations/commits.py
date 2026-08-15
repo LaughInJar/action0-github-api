@@ -11,6 +11,7 @@ from action0.req import Method
 
 from ..models.commit import Commit
 from ..models.comparison import Comparison
+from ..models.pull import PullRequest
 from .base import GitHubOperation
 from .base import PaginatedOperation
 
@@ -133,3 +134,28 @@ class CompareCommits(GitHubOperation[Comparison]):
         :return: the comparison
         """
         return Comparison.from_json(data)
+
+
+class ListPullsForCommit(PaginatedOperation[PullRequest]):
+    """
+    ``GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls`` — list the
+    pull requests a commit belongs to (open and merged) — the reverse
+    lookup of :py:class:`~action0.github.operations.pulls.ListPullCommits`.
+    """
+
+    method = Method.GET
+    path = "/repos/{owner}/{repo}/commits/{commit_sha}/pulls"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    commit_sha: str = path_param()
+    """The full commit sha (unlike :py:class:`GetCommit`'s ``ref``,
+    GitHub wants a sha here, not a branch or tag)."""
+
+    def load_item(self, data: Any) -> PullRequest:
+        """
+        :param data: one decoded JSON array item
+        :return: the pull request
+        """
+        return PullRequest.from_json(data)

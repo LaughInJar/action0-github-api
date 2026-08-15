@@ -1,5 +1,6 @@
 """The user models: :py:class:`SimpleUser` (as GitHub embeds it in other
-resources) and the full :py:class:`User` profile."""
+resources), the full :py:class:`User` profile and the
+:py:class:`Contributor` variant."""
 
 from __future__ import annotations
 
@@ -55,6 +56,35 @@ class SimpleUser:
             id=data["id"],
             html_url=data["html_url"],
             type=data["type"],
+        )
+
+
+@dataclass
+class Contributor(SimpleUser):
+    """
+    A repository contributor — a :py:class:`SimpleUser` plus their
+    commit count, as
+    :py:class:`~action0.github.operations.repos.ListContributors`
+    returns it.
+    """
+
+    contributions: int = 0
+    """The number of commits to the repository."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> Contributor:
+        """
+        Build a contributor from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the contributor
+        """
+        return cls(
+            login=data["login"],
+            id=data["id"],
+            html_url=data["html_url"],
+            type=data["type"],
+            contributions=data.get("contributions", 0),
         )
 
 

@@ -8,9 +8,19 @@ from .base import GitHubOperation
 from .base import NoContentOperation
 from .base import PaginatedOperation
 from .base import SortDirection
+from .branches import GetBranch
+from .branches import ListBranches
+from .checks import CheckRunStatusFilter
+from .checks import ListCheckRunsForRef
+from .collaborators import CollaboratorAffiliation
+from .collaborators import GetCollaboratorPermission
+from .collaborators import ListCollaborators
 from .commits import CompareCommits
 from .commits import GetCommit
 from .commits import ListCommits
+from .commits import ListPullsForCommit
+from .contents import CreateOrUpdateFile
+from .contents import DeleteFile
 from .contents import GetContent
 from .contents import GetReadme
 from .issues import AddAssignees
@@ -30,10 +40,16 @@ from .issues import UnlockIssue
 from .issues import UpdateIssue
 from .issues import UpdateIssueComment
 from .labels import AddIssueLabels
+from .labels import CreateLabel
+from .labels import DeleteLabel
 from .labels import ListRepoLabels
 from .labels import RemoveIssueLabel
+from .labels import UpdateLabel
+from .milestones import CreateMilestone
+from .milestones import DeleteMilestone
 from .milestones import ListMilestones
 from .milestones import MilestoneSort
+from .milestones import UpdateMilestone
 from .orgs import GetOrg
 from .orgs import ListOrgMembers
 from .orgs import OrgMemberRole
@@ -59,15 +75,25 @@ from .releases import ListReleases
 from .releases import UpdateRelease
 from .releases import UploadReleaseAsset
 from .repos import GetRepo
+from .repos import GetRepoTopics
+from .repos import ListContributors
+from .repos import ListLanguages
 from .repos import ListOrgRepos
+from .repos import ListRepoTags
 from .repos import ListUserRepos
 from .repos import OrgRepoType
+from .repos import ReplaceRepoTopics
 from .repos import RepoSort
 from .repos import UserRepoType
 from .reviews import CreatePullReview
+from .reviews import CreateReviewComment
+from .reviews import DraftReviewComment
 from .reviews import ListPullReviews
 from .reviews import ListReviewComments
+from .reviews import RemoveRequestedReviewers
+from .reviews import RequestReviewers
 from .reviews import ReviewEvent
+from .reviews import ReviewSide
 from .search import IssueSearchSort
 from .search import RepoSearchSort
 from .search import SearchIssues
@@ -75,24 +101,40 @@ from .search import SearchOperation
 from .search import SearchRepos
 from .search import SearchUsers
 from .search import UserSearchSort
+from .statuses import GetCombinedStatus
 from .users import GetAuthenticatedUser
 from .users import GetUser
+from .users import ListFollowers
+from .users import ListUserOrgs
 
 __all__ = [
     "AddAssignees",
     "AddIssueLabels",
+    "CheckRunStatusFilter",
+    "CollaboratorAffiliation",
     "CompareCommits",
     "CreateIssue",
     "CreateIssueComment",
+    "CreateLabel",
+    "CreateMilestone",
+    "CreateOrUpdateFile",
     "CreatePull",
     "CreatePullReview",
     "CreateRelease",
+    "CreateReviewComment",
+    "DeleteFile",
     "DeleteIssueComment",
+    "DeleteLabel",
+    "DeleteMilestone",
     "DeleteRelease",
     "DownloadReleaseAsset",
+    "DraftReviewComment",
     "GITHUB_UPLOADS_URL",
     "GenerateReleaseNotes",
     "GetAuthenticatedUser",
+    "GetBranch",
+    "GetCollaboratorPermission",
+    "GetCombinedStatus",
     "GetCommit",
     "GetContent",
     "GetIssue",
@@ -103,15 +145,22 @@ __all__ = [
     "GetReadme",
     "GetReleaseByTag",
     "GetRepo",
+    "GetRepoTopics",
     "GetUser",
     "GitHubOperation",
     "IssueSearchSort",
     "IssueSort",
     "IssueStateFilter",
     "IssueStateReason",
+    "ListBranches",
+    "ListCheckRunsForRef",
+    "ListCollaborators",
     "ListCommits",
+    "ListContributors",
+    "ListFollowers",
     "ListIssueComments",
     "ListIssues",
+    "ListLanguages",
     "ListMilestones",
     "ListOrgMembers",
     "ListOrgRepos",
@@ -119,9 +168,12 @@ __all__ = [
     "ListPullFiles",
     "ListPullReviews",
     "ListPulls",
+    "ListPullsForCommit",
     "ListReleases",
     "ListRepoLabels",
+    "ListRepoTags",
     "ListReviewComments",
+    "ListUserOrgs",
     "ListUserRepos",
     "LockIssue",
     "LockReason",
@@ -136,9 +188,13 @@ __all__ = [
     "PullStateFilter",
     "RemoveAssignees",
     "RemoveIssueLabel",
+    "RemoveRequestedReviewers",
+    "ReplaceRepoTopics",
     "RepoSearchSort",
     "RepoSort",
+    "RequestReviewers",
     "ReviewEvent",
+    "ReviewSide",
     "SearchIssues",
     "SearchOperation",
     "SearchRepos",
@@ -147,6 +203,8 @@ __all__ = [
     "UnlockIssue",
     "UpdateIssue",
     "UpdateIssueComment",
+    "UpdateLabel",
+    "UpdateMilestone",
     "UpdatePull",
     "UpdateRelease",
     "UploadReleaseAsset",

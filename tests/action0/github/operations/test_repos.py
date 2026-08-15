@@ -3,14 +3,21 @@ import unittest
 
 from action0.client import APIError
 from action0.client.testing import StubBackend
+from action0.github import Contributor
 from action0.github import GetRepo
+from action0.github import GetRepoTopics
 from action0.github import GitHubClient
+from action0.github import ListContributors
+from action0.github import ListLanguages
 from action0.github import ListOrgRepos
+from action0.github import ListRepoTags
 from action0.github import ListUserRepos
 from action0.github import Page
+from action0.github import ReplaceRepoTopics
 from action0.github import Repo
 from action0.github import RepoSort
 from action0.github import SortDirection
+from action0.github import Tag
 from action0.github import UserRepoType
 from action0.req import Response
 
@@ -164,3 +171,108 @@ class ListReposTestCase(unittest.TestCase):
 
         self.assertEqual(len(page), 0)
         self.assertFalse(page)
+
+
+class ListRepoTagsTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.repos.ListRepoTags`
+    """
+
+    def test_parses_into_tag_page(self) -> None:
+        """
+        Test that the array is parsed into a page of :py:class:`Tag`.
+        """
+        payload = [{"name": "v1.0.0", "commit": {"sha": "6dcb09b5"}}]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListRepoTags(owner="octo", repo="demo"))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/tags?per_page=30&page=1",
+        )
+        self.assertEqual([(tag.name, tag.sha) for tag in page], [("v1.0.0", "6dcb09b5")])
+        self.assertIsInstance(page[0], Tag)
+
+
+class ListContributorsTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.repos.ListContributors`
+    """
+
+    def test_parses_into_contributor_page(self) -> None:
+        """
+        Test that the items carry the commit count on top of the user
+        core.
+        """
+        payload = [
+            {"login": "octocat", "id": 1, "html_url": "…", "type": "User", "contributions": 42}
+        ]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListContributors(owner="octo", repo="demo"))
+
+        self.assertIsInstance(page[0], Contributor)
+        self.assertEqual(page[0].login, "octocat")
+        self.assertEqual(page[0].contributions, 42)
+
+
+class ListLanguagesTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.repos.ListLanguages`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test that the language → bytes mapping passes through.
+        """
+        backend = StubBackend(Response(200, body=json.dumps({"Python": 512000, "C": 12000})))
+        client = GitHubClient(backend)
+
+        languages = client.send(ListLanguages(owner="octo", repo="demo"))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/languages",
+        )
+        self.assertEqual(languages, {"Python": 512000, "C": 12000})
+
+
+class RepoTopicsTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.repos.GetRepoTopics` and
+    :py:class:`action0.github.operations.repos.ReplaceRepoTopics`
+    """
+
+    def test_get_unwraps_names(self) -> None:
+        """
+        Test that the ``{names: [...]}`` envelope is unwrapped.
+        """
+        backend = StubBackend(Response(200, body=json.dumps({"names": ["api", "python"]})))
+        client = GitHubClient(backend)
+
+        topics = client.send(GetRepoTopics(owner="octo", repo="demo"))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/topics",
+        )
+        self.assertEqual(topics, ["api", "python"])
+
+    def test_replace_sends_names(self) -> None:
+        """
+        Test the wholesale PUT: the complete new set as the body.
+        """
+        backend = StubBackend(Response(200, body=json.dumps({"names": ["api"]})))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        topics = client.send(ReplaceRepoTopics(owner="octo", repo="demo", names=["api"]))
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "PUT")
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"names": ["api"]})
+        self.assertEqual(topics, ["api"])

@@ -5,6 +5,9 @@ from action0.client.testing import StubBackend
 from action0.github import GetAuthenticatedUser
 from action0.github import GetUser
 from action0.github import GitHubClient
+from action0.github import ListFollowers
+from action0.github import ListUserOrgs
+from action0.github import SimpleOrganization
 from action0.github import User
 from action0.req import Response
 
@@ -64,3 +67,50 @@ class GetAuthenticatedUserTestCase(unittest.TestCase):
         request = backend.requests[0]
         self.assertEqual(request.url.as_str(), "https://api.github.com/user")
         self.assertEqual(request.headers["Authorization"], "Bearer ghp_secret")
+
+
+class ListFollowersTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.users.ListFollowers`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test the request path and the follower parsing.
+        """
+        payload = [{"login": "octocat", "id": 1, "html_url": "…", "type": "User"}]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListFollowers(username="gvanrossum"))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/users/gvanrossum/followers?per_page=30&page=1",
+        )
+        self.assertEqual([user.login for user in page], ["octocat"])
+
+
+class ListUserOrgsTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.users.ListUserOrgs`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test that the membership entries parse into
+        :py:class:`SimpleOrganization` — the payloads carry no profile
+        fields, not even an ``html_url``.
+        """
+        payload = [{"login": "python", "id": 1525981, "description": "The language"}]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListUserOrgs(username="gvanrossum"))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/users/gvanrossum/orgs?per_page=30&page=1",
+        )
+        self.assertIsInstance(page[0], SimpleOrganization)
+        self.assertEqual(page[0].login, "python")

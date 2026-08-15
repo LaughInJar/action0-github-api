@@ -1,4 +1,5 @@
-"""The repository content models (:py:class:`ContentFile`, :py:class:`DirectoryEntry`)."""
+"""The repository content models (:py:class:`ContentFile`,
+:py:class:`DirectoryEntry`, :py:class:`FileCommit`)."""
 
 from __future__ import annotations
 
@@ -6,6 +7,8 @@ import base64
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
+
+from .commit import GitCommit
 
 
 class ContentType(StrEnum):
@@ -153,4 +156,36 @@ class DirectoryEntry:
             type=ContentType(data["type"]),
             html_url=data.get("html_url"),
             download_url=data.get("download_url"),
+        )
+
+
+@dataclass
+class FileCommit:
+    """
+    The answer of the contents *write* operations
+    (:py:class:`~action0.github.operations.contents.CreateOrUpdateFile`,
+    :py:class:`~action0.github.operations.contents.DeleteFile`): the
+    commit GitHub created, plus the resulting file entry.
+    """
+
+    commit: GitCommit
+    """The commit the write produced."""
+
+    content: ContentFile | None = None
+    """The written file — its fresh blob :py:attr:`~ContentFile.sha` is
+    what the *next* update of the same file needs. ``None`` after a
+    delete."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> FileCommit:
+        """
+        Build a file commit from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the file commit
+        """
+        content = data.get("content")
+        return cls(
+            commit=GitCommit.from_json(data["commit"]),
+            content=ContentFile.from_json(content) if content is not None else None,
         )
