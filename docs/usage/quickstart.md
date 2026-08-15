@@ -143,6 +143,46 @@ issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", 
 print(issue.number, issue.html_url)  # the server-assigned number and URL
 ```
 
+## Pull requests
+
+{py:class}`~action0.github.operations.pulls.ListPulls` lists a
+repository's pull requests, filterable by head and base branch.
+{py:class}`~action0.github.operations.pulls.GetPull` fetches one —
+including the merge/diff statistics the listings omit (`mergeable`,
+`commits`, `additions`, …). A pull request *is* an issue, so `state` is
+the same open/closed vocabulary — "merged" is not a state but the
+derived `is_merged` (closed with a `merged_at` timestamp):
+
+```python
+from action0.github import GetPull, ListPulls, PullStateFilter
+
+pulls = client.send(ListPulls(owner="python", repo="peps", state=PullStateFilter.OPEN))
+ready = [p for p in pulls if not p.draft]  # one Page — follow .next for more
+
+pull = client.send(GetPull(owner="python", repo="peps", pull_number=42))
+print(pull.is_merged, pull.mergeable, pull.changed_files)  # the stats only GetPull carries
+```
+
+{py:class}`~action0.github.operations.pulls.CreatePull` opens one —
+`head` is the branch with the changes (`"owner:branch"` for a fork),
+`base` the branch to merge into (needs a token with write access):
+
+```python
+from action0.github import CreatePull
+
+pull = client.send(
+    CreatePull(
+        owner="octo",
+        repo="demo",
+        title="Amazing new feature",
+        head="octocat:new-topic",
+        base="main",
+        draft=True,
+    )
+)
+print(pull.number, pull.html_url)  # the server-assigned number and URL
+```
+
 ## Users
 
 {py:class}`~action0.github.operations.users.GetUser` fetches a public

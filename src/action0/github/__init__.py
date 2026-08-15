@@ -18,12 +18,16 @@ from .models import Issue
 from .models import IssueState
 from .models import Label
 from .models import Page
+from .models import PullRequest
+from .models import PullRequestRef
 from .models import Repo
 from .models import SearchPage
 from .models import SimpleUser
 from .models import User
 from .operations import CreateIssue
+from .operations import CreatePull
 from .operations import GetAuthenticatedUser
+from .operations import GetPull
 from .operations import GetRepo
 from .operations import GetUser
 from .operations import GitHubOperation
@@ -31,9 +35,12 @@ from .operations import IssueSort
 from .operations import IssueStateFilter
 from .operations import ListIssues
 from .operations import ListOrgRepos
+from .operations import ListPulls
 from .operations import ListUserRepos
 from .operations import OrgRepoType
 from .operations import PaginatedOperation
+from .operations import PullSort
+from .operations import PullStateFilter
 from .operations import RepoSearchSort
 from .operations import RepoSort
 from .operations import SearchOperation
@@ -50,8 +57,10 @@ __version__: str = "0.1.0"
 __all__ = [
     "ConditionalRequestsHook",
     "CreateIssue",
+    "CreatePull",
     "GITHUB_CONDITIONAL_POLICY",
     "GetAuthenticatedUser",
+    "GetPull",
     "GetRepo",
     "GetUser",
     "GitHubClient",
@@ -64,10 +73,15 @@ __all__ = [
     "Label",
     "ListIssues",
     "ListOrgRepos",
+    "ListPulls",
     "ListUserRepos",
     "OrgRepoType",
     "Page",
     "PaginatedOperation",
+    "PullRequest",
+    "PullRequestRef",
+    "PullSort",
+    "PullStateFilter",
     "Repo",
     "RepoSearchSort",
     "RepoSort",
