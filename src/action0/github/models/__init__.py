@@ -12,6 +12,8 @@ from .label import Label
 from .page import Page
 from .pull import PullRequest
 from .pull import PullRequestRef
+from .rate_limit import RateLimit
+from .rate_limit import RateLimitOverview
 from .release import Release
 from .release import ReleaseAsset
 from .repo import Repo
@@ -27,6 +29,8 @@ __all__ = [
     "Page",
     "PullRequest",
     "PullRequestRef",
+    "RateLimit",
+    "RateLimitOverview",
     "Release",
     "ReleaseAsset",
     "Repo",

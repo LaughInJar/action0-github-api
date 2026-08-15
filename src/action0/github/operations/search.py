@@ -10,9 +10,11 @@ from action0.client import query
 from action0.req import Method
 from action0.req import Response
 
+from ..models.issue import Issue
 from ..models.page import ItemT
 from ..models.repo import Repo
 from ..models.search import SearchPage
+from ..models.user import SimpleUser
 from .base import GitHubOperation
 from .base import SortDirection
 from .base import attach_next
@@ -25,6 +27,30 @@ class RepoSearchSort(StrEnum):
     FORKS = "forks"
     HELP_WANTED_ISSUES = "help-wanted-issues"
     UPDATED = "updated"
+
+
+class IssueSearchSort(StrEnum):
+    """The sort orders of the issue search (``None`` = best match)."""
+
+    COMMENTS = "comments"
+    CREATED = "created"
+    UPDATED = "updated"
+    INTERACTIONS = "interactions"
+    REACTIONS = "reactions"
+    REACTIONS_PLUS_ONE = "reactions-+1"
+    REACTIONS_MINUS_ONE = "reactions--1"
+    REACTIONS_SMILE = "reactions-smile"
+    REACTIONS_THINKING_FACE = "reactions-thinking_face"
+    REACTIONS_HEART = "reactions-heart"
+    REACTIONS_TADA = "reactions-tada"
+
+
+class UserSearchSort(StrEnum):
+    """The sort orders of the user search (``None`` = best match)."""
+
+    FOLLOWERS = "followers"
+    REPOSITORIES = "repositories"
+    JOINED = "joined"
 
 
 class SearchOperation(GitHubOperation[SearchPage[ItemT]]):
@@ -110,3 +136,71 @@ class SearchRepos(SearchOperation[Repo]):
         :return: the repository
         """
         return Repo.from_json(data)
+
+
+class SearchIssues(SearchOperation[Issue]):
+    """
+    ``GET /search/issues`` — search issues and pull requests with
+    GitHub's `query syntax
+    <https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests>`__.
+
+    The hits include pull requests (every pull request is an issue) —
+    filter with ``is:issue``/``is:pr`` in the query, or after the fact
+    via :py:attr:`~action0.github.models.issue.Issue.is_pull_request`.
+
+    >>> operation = SearchIssues(q="repo:python/peps is:open label:bug")
+    >>> operation.as_request("https://api.github.com").url.as_str()
+    'https://api.github.com/search/issues?per_page=30&page=1&q=repo%3Apython%2Fpeps+is%3Aopen+label%3Abug'
+    """
+
+    method = Method.GET
+    path = "/search/issues"
+
+    q: str = query()
+    """The search query, e.g. ``"repo:python/peps is:open label:bug"``."""
+
+    sort: IssueSearchSort | None = query(default=None)
+    """The sort order; ``None`` uses GitHub's default (best match)."""
+
+    order: SortDirection | None = query(default=None)
+    """The sort direction (GitHub's parameter name for search); only
+    applied when :py:attr:`sort` is set, default ``desc``."""
+
+    def load_item(self, data: Any) -> Issue:
+        """
+        :param data: one decoded ``items`` entry
+        :return: the issue (or pull request)
+        """
+        return Issue.from_json(data)
+
+
+class SearchUsers(SearchOperation[SimpleUser]):
+    """
+    ``GET /search/users`` — search users and organizations with
+    GitHub's `query syntax
+    <https://docs.github.com/en/search-github/searching-on-github/searching-users>`__.
+
+    The hits carry only the embedded-user fields, hence
+    :py:class:`~action0.github.models.user.SimpleUser` — fetch the full
+    profile with :py:class:`~action0.github.operations.users.GetUser`.
+    """
+
+    method = Method.GET
+    path = "/search/users"
+
+    q: str = query()
+    """The search query, e.g. ``"fullname:Guido type:user"``."""
+
+    sort: UserSearchSort | None = query(default=None)
+    """The sort order; ``None`` uses GitHub's default (best match)."""
+
+    order: SortDirection | None = query(default=None)
+    """The sort direction (GitHub's parameter name for search); only
+    applied when :py:attr:`sort` is set, default ``desc``."""
+
+    def load_item(self, data: Any) -> SimpleUser:
+        """
+        :param data: one decoded ``items`` entry
+        :return: the user
+        """
+        return SimpleUser.from_json(data)

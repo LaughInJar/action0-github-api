@@ -21,6 +21,8 @@ from .models import Label
 from .models import Page
 from .models import PullRequest
 from .models import PullRequestRef
+from .models import RateLimit
+from .models import RateLimitOverview
 from .models import Release
 from .models import ReleaseAsset
 from .models import Repo
@@ -35,10 +37,12 @@ from .operations import GetAuthenticatedUser
 from .operations import GetIssue
 from .operations import GetLatestRelease
 from .operations import GetPull
+from .operations import GetRateLimit
 from .operations import GetReleaseByTag
 from .operations import GetRepo
 from .operations import GetUser
 from .operations import GitHubOperation
+from .operations import IssueSearchSort
 from .operations import IssueSort
 from .operations import IssueStateFilter
 from .operations import IssueStateReason
@@ -54,11 +58,14 @@ from .operations import PullSort
 from .operations import PullStateFilter
 from .operations import RepoSearchSort
 from .operations import RepoSort
+from .operations import SearchIssues
 from .operations import SearchOperation
 from .operations import SearchRepos
+from .operations import SearchUsers
 from .operations import SortDirection
 from .operations import UpdateIssue
 from .operations import UserRepoType
+from .operations import UserSearchSort
 from .pagination import all_items
 from .pagination import all_items_async
 from .pagination import all_items_deferred
@@ -77,6 +84,7 @@ __all__ = [
     "GetIssue",
     "GetLatestRelease",
     "GetPull",
+    "GetRateLimit",
     "GetReleaseByTag",
     "GetRepo",
     "GetUser",
@@ -85,6 +93,7 @@ __all__ = [
     "GitHubRetryPolicy",
     "Issue",
     "IssueComment",
+    "IssueSearchSort",
     "IssueSort",
     "IssueState",
     "IssueStateFilter",
@@ -103,19 +112,24 @@ __all__ = [
     "PullRequestRef",
     "PullSort",
     "PullStateFilter",
+    "RateLimit",
+    "RateLimitOverview",
     "Release",
     "ReleaseAsset",
     "Repo",
     "RepoSearchSort",
     "RepoSort",
+    "SearchIssues",
     "SearchOperation",
     "SearchPage",
     "SearchRepos",
+    "SearchUsers",
     "SimpleUser",
     "SortDirection",
     "UpdateIssue",
     "User",
     "UserRepoType",
+    "UserSearchSort",
     "all_items",
     "all_items_async",
     "all_items_deferred",

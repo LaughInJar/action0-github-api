@@ -119,6 +119,22 @@ hits = client.send(SearchRepos(q="http client language:python", sort=RepoSearchS
 print(hits.total_count, [r.full_name for r in hits])
 ```
 
+{py:class}`~action0.github.operations.search.SearchIssues` and
+{py:class}`~action0.github.operations.search.SearchUsers` work the
+same way. Issue search returns pull requests too — filter with
+`is:issue`/`is:pr` in the query or via `is_pull_request` after the
+fact; user search hits carry only the embedded-user fields
+(`SimpleUser`), so follow up with `GetUser` for a full profile:
+
+```python
+from action0.github import IssueSearchSort, SearchIssues, SearchUsers, UserSearchSort
+
+bugs = client.send(
+    SearchIssues(q="repo:python/cpython is:open label:bug", sort=IssueSearchSort.REACTIONS)
+)
+users = client.send(SearchUsers(q="fullname:Guido type:user", sort=UserSearchSort.FOLLOWERS))
+```
+
 ## Working with issues
 
 {py:class}`~action0.github.operations.issues.ListIssues` filters the same
@@ -338,6 +354,20 @@ primary window is waited out until `x-ratelimit-reset` — capped at
 `max_backoff` (default 120s; raise it to sit out whole windows). Use
 `RetryingAsyncBackend` / `RetryingDeferredBackend` for the other
 execution models — the policy is the same.
+
+The proactive complement is
+{py:class}`~action0.github.operations.rate_limit.GetRateLimit`: the
+current status of every rate limit window, and the call itself does
+not count against any limit — check before a burst instead of
+reacting to the 403:
+
+```python
+from action0.github import GetRateLimit
+
+limits = client.send(GetRateLimit())
+print(limits.core.remaining, limits.core.reset)  # e.g. 4999 2026-08-15 13:20:00+00:00
+print(limits.search.remaining)  # search has its own, much smaller window
+```
 
 ## Conditional requests — free revalidation
 

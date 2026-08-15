@@ -34,9 +34,9 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, DownloadReleaseAsset, GetLatestRelease, GetRepo
-from action0.github import GetUser, GitHubClient, IssueState, IssueStateReason, ListOrgRepos
-from action0.github import ListPulls, PullStateFilter, RepoSearchSort, RepoSort
+from action0.github import CreateIssue, DownloadReleaseAsset, GetLatestRelease, GetRateLimit
+from action0.github import GetRepo, GetUser, GitHubClient, IssueState, IssueStateReason
+from action0.github import ListOrgRepos, ListPulls, PullStateFilter, RepoSearchSort, RepoSort
 from action0.github import SearchRepos, UpdateIssue, all_items
 
 with RequestsBackend() as backend:
@@ -58,6 +58,9 @@ with RequestsBackend() as backend:
 
     hits = client.send(SearchRepos(q="http client language:python", sort=RepoSearchSort.STARS))
     print(hits.total_count, [r.full_name for r in hits])
+
+    limits = client.send(GetRateLimit())  # this call doesn't count against any limit
+    print(limits.core.remaining, limits.search.remaining)
 ```
 
 Writing works the same way — the typed fields become the JSON body
