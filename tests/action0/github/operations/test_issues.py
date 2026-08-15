@@ -4,8 +4,10 @@ from datetime import datetime
 from datetime import timezone
 
 from action0.client.testing import StubBackend
+from action0.github import AddAssignees
 from action0.github import CreateIssue
 from action0.github import CreateIssueComment
+from action0.github import DeleteIssueComment
 from action0.github import GetIssue
 from action0.github import GitHubClient
 from action0.github import Issue
@@ -16,8 +18,13 @@ from action0.github import IssueStateFilter
 from action0.github import IssueStateReason
 from action0.github import ListIssueComments
 from action0.github import ListIssues
+from action0.github import LockIssue
+from action0.github import LockReason
+from action0.github import RemoveAssignees
 from action0.github import SortDirection
+from action0.github import UnlockIssue
 from action0.github import UpdateIssue
+from action0.github import UpdateIssueComment
 from action0.req import Response
 
 ISSUE_PAYLOAD = {
@@ -295,3 +302,145 @@ class CreateIssueCommentTestCase(unittest.TestCase):
 
         self.assertIsInstance(comment, IssueComment)
         self.assertEqual(comment.id, 301)
+
+
+class UpdateIssueCommentTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.issues.UpdateIssueComment`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test the PATCH request — addressed by the repository-global
+        comment id, no issue number — and the parsing.
+        """
+        backend = StubBackend(Response(200, body=json.dumps(COMMENT_PAYLOAD)))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        comment = client.send(
+            UpdateIssueComment(owner="octo", repo="demo", comment_id=301, body="Fixed in v2.1.")
+        )
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "PATCH")
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/repos/octo/demo/issues/comments/301",
+        )
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"body": "Fixed in v2.1."})
+        self.assertIsInstance(comment, IssueComment)
+
+
+class DeleteIssueCommentTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.issues.DeleteIssueComment`
+    """
+
+    def test_request_and_none_result(self) -> None:
+        """
+        Test the no-content round trip: DELETE out, ``204`` in, ``None``
+        back.
+        """
+        backend = StubBackend(Response(204))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        result = client.send(DeleteIssueComment(owner="octo", repo="demo", comment_id=301))
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "DELETE")
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/repos/octo/demo/issues/comments/301",
+        )
+        self.assertIsNone(result)
+
+
+class LockIssueTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.issues.LockIssue`
+    """
+
+    def test_request_with_reason(self) -> None:
+        """
+        Test the PUT request with the lock reason in the body — GitHub's
+        ``"too heated"`` value contains a space.
+        """
+        request = LockIssue(
+            owner="octo", repo="demo", issue_number=1347, lock_reason=LockReason.TOO_HEATED
+        ).as_request("https://api.github.com")
+
+        self.assertEqual(request.method, "PUT")
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/repos/octo/demo/issues/1347/lock",
+        )
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"lock_reason": "too heated"})
+
+    def test_lock_unlock_round_trip(self) -> None:
+        """
+        Test that lock and unlock both accept the 204 and yield ``None``.
+        """
+        backend = StubBackend(Response(204), Response(204))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        self.assertIsNone(client.send(LockIssue(owner="octo", repo="demo", issue_number=1347)))
+        self.assertIsNone(client.send(UnlockIssue(owner="octo", repo="demo", issue_number=1347)))
+        self.assertEqual(backend.requests[1].method, "DELETE")
+
+
+class AddAssigneesTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.issues.AddAssignees`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test the POST body and that the answer is the updated
+        :py:class:`Issue`.
+        """
+        backend = StubBackend(Response(201, body=json.dumps(ISSUE_PAYLOAD)))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        issue = client.send(
+            AddAssignees(owner="octo", repo="demo", issue_number=1347, assignees=["octocat"])
+        )
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "POST")
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/repos/octo/demo/issues/1347/assignees",
+        )
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"assignees": ["octocat"]})
+        self.assertIsInstance(issue, Issue)
+
+
+class RemoveAssigneesTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.issues.RemoveAssignees`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test GitHub's unusual DELETE-with-a-JSON-body request shape.
+        """
+        backend = StubBackend(Response(200, body=json.dumps(ISSUE_PAYLOAD)))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        issue = client.send(
+            RemoveAssignees(owner="octo", repo="demo", issue_number=1347, assignees=["octocat"])
+        )
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "DELETE")
+        self.assertEqual(request.headers["Content-Type"], "application/json")
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"assignees": ["octocat"]})
+        self.assertIsInstance(issue, Issue)

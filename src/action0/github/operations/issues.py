@@ -15,6 +15,7 @@ from ..models.comment import IssueComment
 from ..models.issue import Issue
 from ..models.issue import IssueState
 from .base import GitHubOperation
+from .base import NoContentOperation
 from .base import PaginatedOperation
 from .base import SortDirection
 
@@ -42,6 +43,17 @@ class IssueStateReason(StrEnum):
     COMPLETED = "completed"
     NOT_PLANNED = "not_planned"
     REOPENED = "reopened"
+
+
+class LockReason(StrEnum):
+    """The reason :py:class:`LockIssue` attaches to a locked
+    conversation (note ``"too heated"`` — GitHub's value contains a
+    space)."""
+
+    OFF_TOPIC = "off-topic"
+    TOO_HEATED = "too heated"
+    RESOLVED = "resolved"
+    SPAM = "spam"
 
 
 class ListIssues(PaginatedOperation[Issue]):
@@ -249,3 +261,139 @@ class CreateIssueComment(GitHubOperation[IssueComment]):
         :return: the created comment (with its server-assigned id)
         """
         return IssueComment.from_json(data)
+
+
+class UpdateIssueComment(GitHubOperation[IssueComment]):
+    """
+    ``PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}`` — edit
+    a comment. Note the address: comment ids are repository-global, so
+    no issue number appears in the path.
+    """
+
+    method = Method.PATCH
+    path = "/repos/{owner}/{repo}/issues/comments/{comment_id}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    comment_id: int = path_param()
+    """The comment id (:py:attr:`IssueComment.id
+    <action0.github.models.comment.IssueComment.id>`) — *not* the issue
+    number."""
+
+    body: str = json_field()
+    """The new comment text — replaces the old one entirely."""
+
+    def load_json(self, data: Any) -> IssueComment:
+        """
+        :param data: the decoded JSON payload
+        :return: the updated comment
+        """
+        return IssueComment.from_json(data)
+
+
+class DeleteIssueComment(NoContentOperation):
+    """
+    ``DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}`` —
+    delete a comment, for good. The first no-content operation: GitHub
+    answers ``204``, ``send`` yields ``None``.
+
+    >>> operation = DeleteIssueComment(owner="octo", repo="demo", comment_id=1)
+    >>> request = operation.as_request("https://api.github.com")
+    >>> f"{request.method} {request.url.as_str()}"
+    'DELETE https://api.github.com/repos/octo/demo/issues/comments/1'
+    """
+
+    method = Method.DELETE
+    path = "/repos/{owner}/{repo}/issues/comments/{comment_id}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+
+    comment_id: int = path_param()
+    """The comment id — *not* the issue number."""
+
+
+class LockIssue(NoContentOperation):
+    """
+    ``PUT /repos/{owner}/{repo}/issues/{issue_number}/lock`` — lock an
+    issue's (or pull request's) conversation: only collaborators can
+    comment until it is unlocked. Answers ``204``.
+    """
+
+    method = Method.PUT
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/lock"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    lock_reason: LockReason | None = json_field(default=None)
+    """The reason shown in the timeline; ``None`` locks without one."""
+
+
+class UnlockIssue(NoContentOperation):
+    """
+    ``DELETE /repos/{owner}/{repo}/issues/{issue_number}/lock`` —
+    unlock the conversation again. Answers ``204``.
+    """
+
+    method = Method.DELETE
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/lock"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+
+class AddAssignees(GitHubOperation[Issue]):
+    """
+    ``POST /repos/{owner}/{repo}/issues/{issue_number}/assignees`` —
+    add assignees to an issue or pull request, keeping the existing
+    ones (unlike :py:class:`UpdateIssue`'s ``assignees``, which
+    replaces the whole set). Unassignable logins are silently ignored
+    by GitHub.
+    """
+
+    method = Method.POST
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    assignees: list[str] = json_field()
+    """The logins to add (at most 10 assignees in total)."""
+
+    def load_json(self, data: Any) -> Issue:
+        """
+        :param data: the decoded JSON payload
+        :return: the issue with its updated assignee set
+        """
+        return Issue.from_json(data)
+
+
+class RemoveAssignees(GitHubOperation[Issue]):
+    """
+    ``DELETE /repos/{owner}/{repo}/issues/{issue_number}/assignees`` —
+    remove assignees from an issue or pull request. A DELETE carrying a
+    JSON body — GitHub's design, unusual but valid HTTP; the fields
+    serialize exactly like every other body.
+    """
+
+    method = Method.DELETE
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/assignees"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    assignees: list[str] = json_field()
+    """The logins to remove (others stay assigned)."""
+
+    def load_json(self, data: Any) -> Issue:
+        """
+        :param data: the decoded JSON payload
+        :return: the issue with its updated assignee set
+        """
+        return Issue.from_json(data)

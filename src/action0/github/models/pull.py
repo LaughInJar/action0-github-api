@@ -1,4 +1,5 @@
-"""The pull request models (:py:class:`PullRequest`, :py:class:`PullRequestRef`)."""
+"""The pull request models (:py:class:`PullRequest`, :py:class:`PullRequestRef`,
+:py:class:`MergeResult`)."""
 
 from __future__ import annotations
 
@@ -55,6 +56,36 @@ class PullRequestRef:
             user=SimpleUser.from_json(user) if user is not None else None,
             repo=Repo.from_json(repo) if repo is not None else None,
         )
+
+
+@dataclass
+class MergeResult:
+    """
+    What :py:class:`~action0.github.operations.pulls.MergePull` returns
+    on success. (An unmergeable pull request is not a result but an
+    error — GitHub answers 405/409, which raise
+    :py:class:`~action0.client.errors.APIError`.)
+    """
+
+    sha: str
+    """The sha of the merge commit."""
+
+    merged: bool
+    """Whether the pull request was merged (always ``True`` on the
+    success payload — kept for fidelity with GitHub's schema)."""
+
+    message: str
+    """GitHub's human-readable outcome message."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> MergeResult:
+        """
+        Build a merge result from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the merge result
+        """
+        return cls(sha=data["sha"], merged=data["merged"], message=data["message"])
 
 
 @dataclass

@@ -6,11 +6,17 @@ from dataclasses import dataclass
 from dataclasses import field
 from datetime import datetime
 from enum import StrEnum
+from typing import TYPE_CHECKING
 from typing import Any
 
 from .label import Label
 from .timestamps import timestamp
 from .user import SimpleUser
+
+if TYPE_CHECKING:
+    # imported lazily at runtime: milestone.py imports IssueState from
+    # this module, so a module-level import would be circular
+    from .milestone import Milestone
 
 
 class IssueState(StrEnum):
@@ -58,6 +64,9 @@ class Issue:
     assignees: list[SimpleUser] = field(default_factory=list)
     """The assigned users."""
 
+    milestone: Milestone | None = None
+    """The milestone the issue is assigned to, if any."""
+
     comments: int = 0
     """The number of comments."""
 
@@ -85,7 +94,10 @@ class Issue:
         :param data: the decoded JSON object
         :return: the issue
         """
+        from .milestone import Milestone
+
         user = data.get("user")
+        milestone = data.get("milestone")
         return cls(
             id=data["id"],
             number=data["number"],
@@ -96,6 +108,7 @@ class Issue:
             body=data.get("body"),
             labels=[Label.from_json(item) for item in data.get("labels", [])],
             assignees=[SimpleUser.from_json(item) for item in data.get("assignees", [])],
+            milestone=Milestone.from_json(milestone) if milestone is not None else None,
             comments=data.get("comments", 0),
             locked=data.get("locked", False),
             # pull requests carry a "pull_request" key with their PR URLs

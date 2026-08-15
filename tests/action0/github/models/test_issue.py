@@ -56,6 +56,28 @@ class IssueTestCase(unittest.TestCase):
         self.assertIsNone(issue.closed_at)
         self.assertFalse(issue.is_pull_request)
 
+    def test_from_json_milestone(self) -> None:
+        """
+        Test that an assigned milestone is parsed (and its absence stays
+        ``None`` — see :py:meth:`test_from_json_minimal`).
+        """
+        payload = dict(
+            ISSUE_PAYLOAD,
+            milestone={
+                "id": 1002604,
+                "number": 1,
+                "title": "v1.0",
+                "state": "open",
+                "html_url": "https://github.com/octo/demo/milestones/v1.0",
+            },
+        )
+
+        issue = Issue.from_json(payload)
+
+        assert issue.milestone is not None
+        self.assertEqual(issue.milestone.title, "v1.0")
+        self.assertIsNone(Issue.from_json(ISSUE_PAYLOAD).milestone)
+
     def test_from_json_pull_request_marker(self) -> None:
         """
         Test that the ``pull_request`` key marks the issue as actually

@@ -2,14 +2,22 @@ import json
 import unittest
 
 from action0.client.testing import StubBackend
+from action0.github import CommitFile
 from action0.github import CreatePull
 from action0.github import GetPull
 from action0.github import GitHubClient
+from action0.github import IssueState
+from action0.github import ListPullCommits
+from action0.github import ListPullFiles
 from action0.github import ListPulls
+from action0.github import MergeMethod
+from action0.github import MergePull
+from action0.github import MergeResult
 from action0.github import PullRequest
 from action0.github import PullSort
 from action0.github import PullStateFilter
 from action0.github import SortDirection
+from action0.github import UpdatePull
 from action0.req import Response
 
 PULL_PAYLOAD = {
@@ -169,3 +177,126 @@ class CreatePullTestCase(unittest.TestCase):
 
         self.assertIsInstance(pull, PullRequest)
         self.assertEqual(pull.number, 1347)
+
+
+class UpdatePullTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.pulls.UpdatePull`
+    """
+
+    def test_request(self) -> None:
+        """
+        Test the PATCH semantics: only the set fields land in the body.
+        """
+        request = UpdatePull(
+            owner="octo", repo="demo", pull_number=1347, state=IssueState.CLOSED
+        ).as_request("https://api.github.com")
+
+        self.assertEqual(request.method, "PATCH")
+        self.assertEqual(request.url.as_str(), "https://api.github.com/repos/octo/demo/pulls/1347")
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"state": "closed"})
+
+
+class MergePullTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.pulls.MergePull`
+    """
+
+    def test_request_and_parse(self) -> None:
+        """
+        Test the PUT request with the merge options and that the answer
+        is parsed into a :py:class:`MergeResult`.
+        """
+        payload = {
+            "sha": "6dcb09b5",
+            "merged": True,
+            "message": "Pull Request successfully merged",
+        }
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend, token="ghp_secret")
+
+        result = client.send(
+            MergePull(
+                owner="octo",
+                repo="demo",
+                pull_number=1347,
+                merge_method=MergeMethod.SQUASH,
+                sha="aa218f56",
+            )
+        )
+
+        request = backend.requests[0]
+        self.assertEqual(request.method, "PUT")
+        self.assertEqual(
+            request.url.as_str(), "https://api.github.com/repos/octo/demo/pulls/1347/merge"
+        )
+        body = request.body_str()
+        assert body is not None
+        self.assertEqual(json.loads(body), {"merge_method": "squash", "sha": "aa218f56"})
+        self.assertIsInstance(result, MergeResult)
+        self.assertTrue(result.merged)
+        self.assertEqual(result.sha, "6dcb09b5")
+
+
+class ListPullFilesTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.pulls.ListPullFiles`
+    """
+
+    def test_parses_into_file_page(self) -> None:
+        """
+        Test that the array is parsed into a page of
+        :py:class:`CommitFile` — the same diff shape the commit
+        endpoints use.
+        """
+        payload = [
+            {
+                "filename": "src/app.py",
+                "status": "modified",
+                "additions": 10,
+                "deletions": 3,
+                "changes": 13,
+            }
+        ]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListPullFiles(owner="octo", repo="demo", pull_number=1347))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/pulls/1347/files?per_page=30&page=1",
+        )
+        self.assertEqual([file.filename for file in page], ["src/app.py"])
+        self.assertIsInstance(page[0], CommitFile)
+
+
+class ListPullCommitsTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.pulls.ListPullCommits`
+    """
+
+    def test_parses_into_commit_page(self) -> None:
+        """
+        Test that the array is parsed into a page of commits.
+        """
+        payload = [
+            {
+                "sha": "6dcb09b5b57875f334f61aebed695e2e4193db5e",
+                "html_url": "https://github.com/octo/demo/commit/6dcb09b5",
+                "commit": {"message": "Fix all the bugs"},
+                "parents": [],
+            }
+        ]
+        backend = StubBackend(Response(200, body=json.dumps(payload)))
+        client = GitHubClient(backend)
+
+        page = client.send(ListPullCommits(owner="octo", repo="demo", pull_number=1347))
+
+        self.assertEqual(
+            backend.requests[0].url.as_str(),
+            "https://api.github.com/repos/octo/demo/pulls/1347/commits?per_page=30&page=1",
+        )
+        self.assertEqual([commit.message for commit in page], ["Fix all the bugs"])

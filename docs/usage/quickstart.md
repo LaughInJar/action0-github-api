@@ -198,6 +198,48 @@ comment = client.send(
 print(comment.html_url)
 ```
 
+Editing and deleting address a comment by its *id* (repository-global —
+no issue number in the path).
+{py:class}`~action0.github.operations.issues.DeleteIssueComment` is a
+**no-content** operation: GitHub answers `204` and `send` yields plain
+`None`. Locking a conversation works the same way:
+
+```python
+from action0.github import DeleteIssueComment, LockIssue, LockReason, UpdateIssueComment
+
+comment = client.send(
+    UpdateIssueComment(owner="octo", repo="demo", comment_id=comment.id, body="Fixed in v2.1.")
+)
+client.send(DeleteIssueComment(owner="octo", repo="demo", comment_id=comment.id))  # None
+client.send(
+    LockIssue(owner="octo", repo="demo", issue_number=1347, lock_reason=LockReason.RESOLVED)
+)  # None; UnlockIssue reverses it
+```
+
+Labels and assignees can also be changed *incrementally* — unlike
+`UpdateIssue`'s `labels`/`assignees`, which replace the whole set:
+{py:class}`~action0.github.operations.labels.AddIssueLabels` /
+{py:class}`~action0.github.operations.labels.RemoveIssueLabel` answer
+with the resulting label set,
+{py:class}`~action0.github.operations.issues.AddAssignees` /
+{py:class}`~action0.github.operations.issues.RemoveAssignees` with the
+updated issue (the removal is a DELETE carrying a JSON body — GitHub's
+design). {py:class}`~action0.github.operations.labels.ListRepoLabels`
+and {py:class}`~action0.github.operations.milestones.ListMilestones`
+list what a repository has to offer — and an issue carries its
+milestone as `issue.milestone`:
+
+```python
+from action0.github import AddIssueLabels, ListMilestones, RemoveIssueLabel
+
+labels = client.send(AddIssueLabels(owner="octo", repo="demo", issue_number=1347, labels=["ui"]))
+labels = client.send(
+    RemoveIssueLabel(owner="octo", repo="demo", issue_number=1347, name="bug")
+)  # the remaining set
+milestones = client.send(ListMilestones(owner="octo", repo="demo"))
+print([m.title for m in milestones], [label.name for label in labels])
+```
+
 ## Pull requests
 
 {py:class}`~action0.github.operations.pulls.ListPulls` lists a
@@ -236,6 +278,51 @@ pull = client.send(
     )
 )
 print(pull.number, pull.html_url)  # the server-assigned number and URL
+```
+
+{py:class}`~action0.github.operations.pulls.UpdatePull` edits with the
+same PATCH semantics as `UpdateIssue`;
+{py:class}`~action0.github.operations.pulls.ListPullFiles` and
+{py:class}`~action0.github.operations.pulls.ListPullCommits` page
+through the diff and the commits (the same shapes the commit endpoints
+use). {py:class}`~action0.github.operations.pulls.MergePull` merges —
+pass the `sha` guard and nothing pushed after your last look can slip
+in (an unmergeable pull request raises `APIError`, GitHub answers
+405/409):
+
+```python
+from action0.github import MergeMethod, MergePull
+
+result = client.send(
+    MergePull(
+        owner="octo",
+        repo="demo",
+        pull_number=42,
+        merge_method=MergeMethod.SQUASH,
+        sha=pull.head.sha,  # only merge what was reviewed
+    )
+)
+print(result.merged, result.sha)  # True, the merge commit
+```
+
+Reviews:
+{py:class}`~action0.github.operations.reviews.ListPullReviews` lists
+them, {py:class}`~action0.github.operations.reviews.CreatePullReview`
+approves, requests changes or comments (the wire values are uppercase
+here — GitHub's one all-caps vocabulary), and
+{py:class}`~action0.github.operations.reviews.ListReviewComments`
+lists the line-anchored review comments. The conversation thread is
+*not* here — that is `ListIssueComments`, because a pull request is an
+issue:
+
+```python
+from action0.github import CreatePullReview, ListPullReviews, ReviewEvent
+
+reviews = client.send(ListPullReviews(owner="octo", repo="demo", pull_number=42))
+review = client.send(
+    CreatePullReview(owner="octo", repo="demo", pull_number=42, event=ReviewEvent.APPROVE)
+)
+print(review.state)  # ReviewState.APPROVED
 ```
 
 ## Commits
@@ -295,6 +382,56 @@ print([f.filename for f in diff.files])
 `diff.files` at 300 — for bigger ranges, list commits page by page via
 `ListCommits(sha="topic")`.
 
+## Repository contents
+
+{py:class}`~action0.github.operations.contents.GetContent` fetches a
+file or lists a directory. GitHub answers with an *object* for a file
+and an *array* for a directory, so the result is the union of the two —
+dispatch with `isinstance`:
+
+```python
+from action0.github import ContentFile, GetContent
+
+content = client.send(GetContent(owner="octo", repo="demo", file_path="src/app.py"))
+if isinstance(content, ContentFile):
+    print(content.text)  # bytes arrive base64-encoded; .decoded / .text decode them
+else:
+    print([entry.path for entry in content])  # a directory listing (no content inlined)
+```
+
+The field is `file_path` because GitHub's parameter name, `path`, is
+the operation's own path template attribute; `""` lists the repository
+root, and `ref` reads from any branch, tag or sha. One size limit to
+know: files between 1 and 100 MB arrive with `encoding: "none"` and no
+inlined content — `decoded` raises `ValueError` then; fetch the bytes
+via the entry's `download_url` instead.
+
+{py:class}`~action0.github.operations.contents.GetReadme` finds the
+README whatever it is called (`README.md`, `README.rst`, …):
+
+```python
+from action0.github import GetReadme
+
+readme = client.send(GetReadme(owner="python", repo="peps"))
+print(readme.name, len(readme.text))
+```
+
+## Organizations
+
+{py:class}`~action0.github.operations.orgs.GetOrg` fetches an
+organization's profile,
+{py:class}`~action0.github.operations.orgs.ListOrgMembers` pages
+through its members — the public ones, unless the token belongs to a
+member:
+
+```python
+from action0.github import GetOrg, ListOrgMembers, OrgMemberRole
+
+org = client.send(GetOrg(org="python"))
+admins = client.send(ListOrgMembers(org="python", role=OrgMemberRole.ADMIN))
+print(org.name, org.public_repos, [member.login for member in admins])
+```
+
 ## Releases and asset downloads
 
 {py:class}`~action0.github.operations.releases.ListReleases` lists a
@@ -344,6 +481,57 @@ redirects (requests, aiohttp and urllib do by default, httpx needs
 from the one running JSON operations, whose `load()` reads the whole
 body anyway (see the
 [action0-client streaming guide](https://laughinjar.github.io/action0-client/usage/streaming.html)).
+
+The write side:
+{py:class}`~action0.github.operations.releases.CreateRelease` creates
+(a draft, if asked — and can have GitHub generate the notes),
+{py:class}`~action0.github.operations.releases.UpdateRelease` edits
+with PATCH semantics — publishing a draft is just `draft=False` —
+{py:class}`~action0.github.operations.releases.DeleteRelease` deletes
+(a `204` no-content operation; the git tag survives), and
+{py:class}`~action0.github.operations.releases.GenerateReleaseNotes`
+returns the merged-PRs changelog without creating anything, for
+editing before publication:
+
+```python
+from action0.github import CreateRelease, GenerateReleaseNotes, UpdateRelease
+
+notes = client.send(GenerateReleaseNotes(owner="octo", repo="demo", tag_name="v1.1.0"))
+release = client.send(
+    CreateRelease(
+        owner="octo", repo="demo", tag_name="v1.1.0", name=notes.name, body=notes.body, draft=True
+    )
+)
+release = client.send(UpdateRelease(owner="octo", repo="demo", release_id=release.id, draft=False))
+print(release.html_url)
+```
+
+{py:class}`~action0.github.operations.releases.UploadReleaseAsset`
+attaches a file to a release — **the one operation that does not go to
+`api.github.com`**: GitHub takes uploads on a separate host, so send it
+through a client pointed at
+{py:data}`~action0.github.operations.releases.GITHUB_UPLOADS_URL`
+(same token, same backend if you like). The raw bytes are the request
+body; a {py:class}`~action0.req.body.FileBody` streams them from disk
+instead of holding the file in memory:
+
+```python
+from action0.github import GITHUB_UPLOADS_URL, GitHubClient, UploadReleaseAsset
+from action0.req import FileBody
+
+upload_client = GitHubClient(backend, token="ghp_...", base_url=GITHUB_UPLOADS_URL)
+asset = upload_client.send(
+    UploadReleaseAsset(
+        owner="octo",
+        repo="demo",
+        release_id=release.id,
+        name="demo-1.1.0.tar.gz",
+        content_type="application/gzip",
+        data=FileBody("dist/demo-1.1.0.tar.gz"),  # or plain bytes
+    )
+)
+print(asset.id, asset.browser_download_url)
+```
 
 ## Users
 
