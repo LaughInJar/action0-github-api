@@ -21,6 +21,7 @@ from .pulls import GetPull
 from .pulls import ListPulls
 from .pulls import PullSort
 from .pulls import PullStateFilter
+from .rate_limit import GetRateLimit
 from .releases import DownloadReleaseAsset
 from .releases import GetLatestRelease
 from .releases import GetReleaseByTag
@@ -31,9 +32,13 @@ from .repos import ListUserRepos
 from .repos import OrgRepoType
 from .repos import RepoSort
 from .repos import UserRepoType
+from .search import IssueSearchSort
 from .search import RepoSearchSort
+from .search import SearchIssues
 from .search import SearchOperation
 from .search import SearchRepos
+from .search import SearchUsers
+from .search import UserSearchSort
 from .users import GetAuthenticatedUser
 from .users import GetUser
 
@@ -46,10 +51,12 @@ __all__ = [
     "GetIssue",
     "GetLatestRelease",
     "GetPull",
+    "GetRateLimit",
     "GetReleaseByTag",
     "GetRepo",
     "GetUser",
     "GitHubOperation",
+    "IssueSearchSort",
     "IssueSort",
     "IssueStateFilter",
     "IssueStateReason",
@@ -65,9 +72,12 @@ __all__ = [
     "PullStateFilter",
     "RepoSearchSort",
     "RepoSort",
+    "SearchIssues",
     "SearchOperation",
     "SearchRepos",
+    "SearchUsers",
     "SortDirection",
     "UpdateIssue",
     "UserRepoType",
+    "UserSearchSort",
 ]

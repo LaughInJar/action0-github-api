@@ -3,10 +3,16 @@ import unittest
 
 from action0.client.testing import StubBackend
 from action0.github import GitHubClient
+from action0.github import Issue
+from action0.github import IssueSearchSort
 from action0.github import RepoSearchSort
+from action0.github import SearchIssues
 from action0.github import SearchPage
 from action0.github import SearchRepos
+from action0.github import SearchUsers
+from action0.github import SimpleUser
 from action0.github import SortDirection
+from action0.github import UserSearchSort
 from action0.github import all_items
 from action0.req import Response
 
@@ -114,3 +120,98 @@ class SearchReposTestCase(unittest.TestCase):
 
         self.assertEqual(names, ["cpython", "peps", "mypy"])
         self.assertEqual(len(backend.requests), 2)
+
+
+ISSUE_PAYLOAD = {
+    "id": 101,
+    "number": 1347,
+    "title": "Found a bug",
+    "state": "open",
+    "html_url": "https://github.com/octo/demo/issues/1347",
+    "user": None,
+}
+
+USER_PAYLOAD = {
+    "login": "octocat",
+    "id": 1,
+    "html_url": "https://github.com/octocat",
+    "type": "User",
+}
+
+
+class SearchIssuesTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.search.SearchIssues`
+    """
+
+    def test_request(self) -> None:
+        """
+        Test the request shape: the query is URL-encoded, the sort enum
+        serializes to its wire value (``reactions-+1`` is not a member
+        name).
+        """
+        request = SearchIssues(
+            q="repo:octo/demo is:open",
+            sort=IssueSearchSort.REACTIONS_PLUS_ONE,
+            order=SortDirection.ASC,
+        ).as_request("https://api.github.com")
+
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/search/issues"
+            "?per_page=30&page=1&q=repo%3Aocto%2Fdemo+is%3Aopen&sort=reactions-%2B1&order=asc",
+        )
+
+    def test_parses_the_search_envelope(self) -> None:
+        """
+        Test that the envelope is parsed into a :py:class:`SearchPage`
+        of issues — with the pull request marker preserved.
+        """
+        pull_item = dict(ISSUE_PAYLOAD, id=102, pull_request={"url": "..."})
+        body = json.dumps(
+            {"total_count": 2, "incomplete_results": False, "items": [ISSUE_PAYLOAD, pull_item]}
+        )
+        backend = StubBackend(Response(200, body=body))
+        client = GitHubClient(backend)
+
+        page = client.send(SearchIssues(q="repo:octo/demo is:open"))
+
+        self.assertIsInstance(page, SearchPage)
+        self.assertEqual(page.total_count, 2)
+        self.assertIsInstance(page[0], Issue)
+        self.assertEqual([issue.is_pull_request for issue in page], [False, True])
+
+
+class SearchUsersTestCase(unittest.TestCase):
+    """
+    tests for :py:class:`action0.github.operations.search.SearchUsers`
+    """
+
+    def test_request(self) -> None:
+        """
+        Test the request shape with the user-specific sort vocabulary.
+        """
+        request = SearchUsers(
+            q="fullname:Guido type:user", sort=UserSearchSort.FOLLOWERS
+        ).as_request("https://api.github.com")
+
+        self.assertEqual(
+            request.url.as_str(),
+            "https://api.github.com/search/users"
+            "?per_page=30&page=1&q=fullname%3AGuido+type%3Auser&sort=followers",
+        )
+
+    def test_parses_the_search_envelope(self) -> None:
+        """
+        Test that the envelope is parsed into a :py:class:`SearchPage`
+        of :py:class:`SimpleUser` (search hits carry no profile fields).
+        """
+        body = json.dumps({"total_count": 1, "incomplete_results": False, "items": [USER_PAYLOAD]})
+        backend = StubBackend(Response(200, body=body))
+        client = GitHubClient(backend)
+
+        page = client.send(SearchUsers(q="octocat"))
+
+        self.assertEqual(page.total_count, 1)
+        self.assertIsInstance(page[0], SimpleUser)
+        self.assertEqual([user.login for user in page], ["octocat"])

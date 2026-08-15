@@ -79,6 +79,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.operations.rate_limit`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.rate_limit
+   :members:
+```
+
 ### `action0.github.operations.users`
 
 ```{eval-rst}
@@ -159,6 +166,13 @@ Everything below is importable from the package root, e.g.
 
 ```{eval-rst}
 .. automodule:: action0.github.models.search
+   :members:
+```
+
+### `action0.github.models.rate_limit`
+
+```{eval-rst}
+.. automodule:: action0.github.models.rate_limit
    :members:
 ```
 
