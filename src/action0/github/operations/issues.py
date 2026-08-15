@@ -11,7 +11,9 @@ from action0.client import path_param
 from action0.client import query
 from action0.req import Method
 
+from ..models.comment import IssueComment
 from ..models.issue import Issue
+from ..models.issue import IssueState
 from .base import GitHubOperation
 from .base import PaginatedOperation
 from .base import SortDirection
@@ -32,6 +34,14 @@ class IssueSort(StrEnum):
     CREATED = "created"
     UPDATED = "updated"
     COMMENTS = "comments"
+
+
+class IssueStateReason(StrEnum):
+    """The reason attached to an issue's state by :py:class:`UpdateIssue`."""
+
+    COMPLETED = "completed"
+    NOT_PLANNED = "not_planned"
+    REOPENED = "reopened"
 
 
 class ListIssues(PaginatedOperation[Issue]):
@@ -77,6 +87,32 @@ class ListIssues(PaginatedOperation[Issue]):
         return Issue.from_json(data)
 
 
+class GetIssue(GitHubOperation[Issue]):
+    """
+    ``GET /repos/{owner}/{repo}/issues/{issue_number}`` — fetch one
+    issue (or pull request — see
+    :py:attr:`~action0.github.models.issue.Issue.is_pull_request`).
+
+    >>> operation = GetIssue(owner="python", repo="peps", issue_number=42)
+    >>> operation.as_request("https://api.github.com").url.as_str()
+    'https://api.github.com/repos/python/peps/issues/42'
+    """
+
+    method = Method.GET
+    path = "/repos/{owner}/{repo}/issues/{issue_number}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    def load_json(self, data: Any) -> Issue:
+        """
+        :param data: the decoded JSON payload
+        :return: the issue
+        """
+        return Issue.from_json(data)
+
+
 class CreateIssue(GitHubOperation[Issue]):
     """
     ``POST /repos/{owner}/{repo}/issues`` — create an issue.
@@ -109,3 +145,107 @@ class CreateIssue(GitHubOperation[Issue]):
         :return: the created issue (with its server-assigned number)
         """
         return Issue.from_json(data)
+
+
+class UpdateIssue(GitHubOperation[Issue]):
+    """
+    ``PATCH /repos/{owner}/{repo}/issues/{issue_number}`` — update an
+    issue (requires a token with write access to the repository).
+
+    PATCH semantics: only the fields you set are changed — a ``None``
+    field is omitted from the JSON body and leaves the issue untouched.
+    (This also means clearing a field by sending JSON ``null`` is not
+    expressible here; send an empty string/list instead where GitHub
+    accepts one.) Like every non-idempotent method, a PATCH is never
+    blindly repeated by
+    :py:class:`~action0.github.retry.GitHubRetryPolicy`.
+    """
+
+    method = Method.PATCH
+    path = "/repos/{owner}/{repo}/issues/{issue_number}"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    title: str | None = json_field(default=None)
+    """The new title."""
+
+    body: str | None = json_field(default=None)
+    """The new description text (GitHub-flavored Markdown)."""
+
+    state: IssueState | None = json_field(default=None)
+    """Open or close the issue."""
+
+    state_reason: IssueStateReason | None = json_field(default=None)
+    """The reason to attach to the state change (close as
+    ``completed``/``not_planned``, reopen as ``reopened``)."""
+
+    labels: list[str] | None = json_field(default=None)
+    """The new label names — replaces the whole set (``[]`` clears it)."""
+
+    assignees: list[str] | None = json_field(default=None)
+    """The new assignee logins — replaces the whole set (``[]`` clears
+    it)."""
+
+    def load_json(self, data: Any) -> Issue:
+        """
+        :param data: the decoded JSON payload
+        :return: the updated issue
+        """
+        return Issue.from_json(data)
+
+
+class ListIssueComments(PaginatedOperation[IssueComment]):
+    """
+    ``GET /repos/{owner}/{repo}/issues/{issue_number}/comments`` — list
+    an issue's comments, oldest first (pull request conversation
+    comments live here too — every pull request is an issue).
+
+    >>> operation = ListIssueComments(owner="python", repo="peps", issue_number=42)
+    >>> operation.as_request("https://api.github.com").url.as_str()
+    'https://api.github.com/repos/python/peps/issues/42/comments?per_page=30&page=1'
+    """
+
+    method = Method.GET
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/comments"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    since: datetime | None = query(default=None)
+    """Only comments updated at or after this time (serialized to
+    ISO 8601)."""
+
+    def load_item(self, data: Any) -> IssueComment:
+        """
+        :param data: one decoded JSON array item
+        :return: the comment
+        """
+        return IssueComment.from_json(data)
+
+
+class CreateIssueComment(GitHubOperation[IssueComment]):
+    """
+    ``POST /repos/{owner}/{repo}/issues/{issue_number}/comments`` —
+    comment on an issue or pull request (requires a token with write
+    access to the repository).
+    """
+
+    method = Method.POST
+    path = "/repos/{owner}/{repo}/issues/{issue_number}/comments"
+
+    owner: str = path_param()
+    repo: str = path_param()
+    issue_number: int = path_param()
+
+    body: str = json_field()
+    """The comment text (GitHub-flavored Markdown)."""
+
+    def load_json(self, data: Any) -> IssueComment:
+        """
+        :param data: the decoded JSON payload
+        :return: the created comment (with its server-assigned id)
+        """
+        return IssueComment.from_json(data)

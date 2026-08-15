@@ -143,6 +143,45 @@ issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", 
 print(issue.number, issue.html_url)  # the server-assigned number and URL
 ```
 
+{py:class}`~action0.github.operations.issues.GetIssue` fetches one
+issue by number, and
+{py:class}`~action0.github.operations.issues.UpdateIssue` is the first
+PATCH operation: only the fields you set are changed — a `None` field
+is omitted from the body and leaves the issue untouched (so closing an
+issue does not blank its title). Being non-idempotent, a PATCH is
+never blindly repeated by the retry policy:
+
+```python
+from action0.github import GetIssue, IssueState, IssueStateReason, UpdateIssue
+
+issue = client.send(GetIssue(owner="octo", repo="demo", issue_number=1347))
+issue = client.send(
+    UpdateIssue(
+        owner="octo",
+        repo="demo",
+        issue_number=1347,
+        state=IssueState.CLOSED,
+        state_reason=IssueStateReason.NOT_PLANNED,
+    )
+)
+print(issue.state)  # IssueState.CLOSED
+```
+
+Comments work on issues and pull requests alike (a pull request's
+conversation *is* its issue's comment thread):
+
+```python
+from action0.github import CreateIssueComment, ListIssueComments
+
+comments = client.send(ListIssueComments(owner="octo", repo="demo", issue_number=1347))
+print([c.user.login for c in comments if c.user])  # one Page — follow .next for more
+
+comment = client.send(
+    CreateIssueComment(owner="octo", repo="demo", issue_number=1347, body="Fixed in v2.")
+)
+print(comment.html_url)
+```
+
 ## Pull requests
 
 {py:class}`~action0.github.operations.pulls.ListPulls` lists a

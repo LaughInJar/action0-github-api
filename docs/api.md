@@ -113,6 +113,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.models.comment`
+
+```{eval-rst}
+.. automodule:: action0.github.models.comment
+   :members:
+```
+
 ### `action0.github.models.issue`
 
 ```{eval-rst}

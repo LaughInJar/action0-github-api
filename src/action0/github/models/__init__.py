@@ -5,6 +5,7 @@ decoded API payload. They cover the commonly used fields of the GitHub
 schemas, not every last one.
 """
 
+from .comment import IssueComment
 from .issue import Issue
 from .issue import IssueState
 from .label import Label
@@ -18,6 +19,7 @@ from .user import User
 
 __all__ = [
     "Issue",
+    "IssueComment",
     "IssueState",
     "Label",
     "Page",
