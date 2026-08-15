@@ -34,9 +34,9 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient, ListOrgRepos
-from action0.github import ListPulls, PullStateFilter, RepoSearchSort, RepoSort
-from action0.github import SearchRepos, all_items
+from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient, IssueState
+from action0.github import IssueStateReason, ListOrgRepos, ListPulls, PullStateFilter
+from action0.github import RepoSearchSort, RepoSort, SearchRepos, UpdateIssue, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -60,10 +60,20 @@ with RequestsBackend() as backend:
 ```
 
 Writing works the same way — the typed fields become the JSON body
-(needs a token):
+(needs a token). Updates are PATCH semantics: `None` fields are
+omitted and stay untouched:
 
 ```python
 issue = client.send(CreateIssue(owner="octo", repo="demo", title="Found a bug", labels=["bug"]))
+issue = client.send(
+    UpdateIssue(
+        owner="octo",
+        repo="demo",
+        issue_number=issue.number,
+        state=IssueState.CLOSED,
+        state_reason=IssueStateReason.COMPLETED,
+    )
+)
 ```
 
 Rate limits are handled by wrapping the backend with action0-client's

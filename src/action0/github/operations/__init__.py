@@ -8,9 +8,14 @@ from .base import GitHubOperation
 from .base import PaginatedOperation
 from .base import SortDirection
 from .issues import CreateIssue
+from .issues import CreateIssueComment
+from .issues import GetIssue
 from .issues import IssueSort
 from .issues import IssueStateFilter
+from .issues import IssueStateReason
+from .issues import ListIssueComments
 from .issues import ListIssues
+from .issues import UpdateIssue
 from .pulls import CreatePull
 from .pulls import GetPull
 from .pulls import ListPulls
@@ -30,14 +35,18 @@ from .users import GetUser
 
 __all__ = [
     "CreateIssue",
+    "CreateIssueComment",
     "CreatePull",
     "GetAuthenticatedUser",
+    "GetIssue",
     "GetPull",
     "GetRepo",
     "GetUser",
     "GitHubOperation",
     "IssueSort",
     "IssueStateFilter",
+    "IssueStateReason",
+    "ListIssueComments",
     "ListIssues",
     "ListOrgRepos",
     "ListPulls",
@@ -51,5 +60,6 @@ __all__ = [
     "SearchOperation",
     "SearchRepos",
     "SortDirection",
+    "UpdateIssue",
     "UserRepoType",
 ]

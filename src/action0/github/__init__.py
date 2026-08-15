@@ -15,6 +15,7 @@ from .client import GitHubClient
 from .conditional import GITHUB_CONDITIONAL_POLICY
 from .conditional import ConditionalRequestsHook
 from .models import Issue
+from .models import IssueComment
 from .models import IssueState
 from .models import Label
 from .models import Page
@@ -25,14 +26,18 @@ from .models import SearchPage
 from .models import SimpleUser
 from .models import User
 from .operations import CreateIssue
+from .operations import CreateIssueComment
 from .operations import CreatePull
 from .operations import GetAuthenticatedUser
+from .operations import GetIssue
 from .operations import GetPull
 from .operations import GetRepo
 from .operations import GetUser
 from .operations import GitHubOperation
 from .operations import IssueSort
 from .operations import IssueStateFilter
+from .operations import IssueStateReason
+from .operations import ListIssueComments
 from .operations import ListIssues
 from .operations import ListOrgRepos
 from .operations import ListPulls
@@ -46,6 +51,7 @@ from .operations import RepoSort
 from .operations import SearchOperation
 from .operations import SearchRepos
 from .operations import SortDirection
+from .operations import UpdateIssue
 from .operations import UserRepoType
 from .pagination import all_items
 from .pagination import all_items_async
@@ -57,9 +63,11 @@ __version__: str = "0.1.0"
 __all__ = [
     "ConditionalRequestsHook",
     "CreateIssue",
+    "CreateIssueComment",
     "CreatePull",
     "GITHUB_CONDITIONAL_POLICY",
     "GetAuthenticatedUser",
+    "GetIssue",
     "GetPull",
     "GetRepo",
     "GetUser",
@@ -67,10 +75,13 @@ __all__ = [
     "GitHubOperation",
     "GitHubRetryPolicy",
     "Issue",
+    "IssueComment",
     "IssueSort",
     "IssueState",
     "IssueStateFilter",
+    "IssueStateReason",
     "Label",
+    "ListIssueComments",
     "ListIssues",
     "ListOrgRepos",
     "ListPulls",
@@ -90,6 +101,7 @@ __all__ = [
     "SearchRepos",
     "SimpleUser",
     "SortDirection",
+    "UpdateIssue",
     "User",
     "UserRepoType",
     "all_items",
