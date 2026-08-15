@@ -1,8 +1,8 @@
 """
 The base classes shared by all GitHub operations
-(:py:class:`GitHubOperation`, :py:class:`PaginatedOperation`) and the
-query vocabularies GitHub uses across resource areas
-(:py:class:`SortDirection`).
+(:py:class:`GitHubOperation`, :py:class:`PaginatedOperation`,
+:py:class:`NoContentOperation`) and the query vocabularies GitHub uses
+across resource areas (:py:class:`SortDirection`).
 """
 
 from abc import abstractmethod
@@ -12,6 +12,7 @@ from typing import Any
 from typing import TypeVar
 
 from action0.client import JsonOperation
+from action0.client import Operation
 from action0.client import query
 from action0.req import Response
 
@@ -73,6 +74,31 @@ class GitHubOperation(JsonOperation[R_co]):
     """
 
     accept = "application/vnd.github+json"
+
+
+class NoContentOperation(Operation[None]):
+    """
+    The base class of the operations whose success answer is ``204 No
+    Content`` — deletes, locks and the like. There is nothing to parse,
+    so ``send`` yields ``None`` (wrapped in whatever the execution model
+    wraps results in); errors surface as usual via
+    :py:class:`~action0.client.errors.APIError`.
+
+    Not a :py:class:`GitHubOperation`: ``JsonOperation``'s ``load``
+    treats an empty body as an error, which is exactly the success case
+    here.
+    """
+
+    accept = "application/vnd.github+json"
+
+    def load(self, response: Response) -> None:
+        """
+        Nothing to parse — a vetted response *is* the success.
+
+        :param response: the response, already vetted
+        :return: ``None``, always
+        """
+        return None
 
 
 class PaginatedOperation(GitHubOperation[Page[ItemT]]):

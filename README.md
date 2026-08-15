@@ -35,10 +35,10 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 ```python
 from action0.client.backends.requests import RequestsBackend
 from action0.github import CompareCommits, CreateIssue, DownloadReleaseAsset, GetLatestRelease
-from action0.github import GetRateLimit, GetRepo, GetUser, GitHubClient, IssueState
-from action0.github import IssueStateReason, ListCommits, ListOrgRepos, ListPulls
-from action0.github import PullStateFilter, RepoSearchSort, RepoSort, SearchRepos, UpdateIssue
-from action0.github import all_items
+from action0.github import GetRateLimit, GetReadme, GetRepo, GetUser, GitHubClient, IssueState
+from action0.github import IssueStateReason, ListCommits, ListOrgRepos, ListPulls, MergeMethod
+from action0.github import MergePull, PullStateFilter, RepoSearchSort, RepoSort, SearchRepos
+from action0.github import UpdateIssue, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -59,6 +59,9 @@ with RequestsBackend() as backend:
 
     diff = client.send(CompareCommits(owner="python", repo="peps", base="main", head="topic"))
     print(diff.status, diff.ahead_by, [f.filename for f in diff.files])
+
+    readme = client.send(GetReadme(owner="python", repo="peps"))
+    print(readme.text[:40])  # contents arrive base64-encoded — .text decodes
 
     user = client.send(GetUser(username="gvanrossum"))
     print(user.name, user.followers)
@@ -85,6 +88,10 @@ issue = client.send(
         state_reason=IssueStateReason.COMPLETED,
     )
 )
+
+result = client.send(  # pull requests merge the same way
+    MergePull(owner="octo", repo="demo", pull_number=42, merge_method=MergeMethod.SQUASH)
+)
 ```
 
 Release assets download as a stream — on a `stream=True` backend the
@@ -102,6 +109,10 @@ with RequestsBackend(stream=True) as backend:  # a second backend, just for down
         for chunk in producer.chunks():
             file.write(chunk)
 ```
+
+Uploading works too — `UploadReleaseAsset` streams a file to a release,
+sent through a client pointed at `GITHUB_UPLOADS_URL` (GitHub takes
+uploads on a separate host).
 
 Rate limits are handled by wrapping the backend with action0-client's
 retrying wrapper and the GitHub-tuned policy — and saved in the first
@@ -123,9 +134,11 @@ runnable example.
 
 ## Status
 
-Under construction — the first operations are in place and the endpoint
-coverage grows from here. Documentation:
-<https://laughinjar.github.io/action0-github-api/>
+The core resource areas are covered: repositories (incl. contents),
+issues (incl. comments, labels, milestones, assignees), pull requests
+(incl. merging and reviews), commits, releases (incl. streaming asset
+down- and uploads), users, organizations, search and rate limits.
+Documentation: <https://laughinjar.github.io/action0-github-api/>
 
 ## License
 

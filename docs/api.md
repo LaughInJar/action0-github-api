@@ -58,6 +58,20 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.operations.labels`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.labels
+   :members:
+```
+
+### `action0.github.operations.milestones`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.milestones
+   :members:
+```
+
 ### `action0.github.operations.pulls`
 
 ```{eval-rst}
@@ -69,6 +83,27 @@ Everything below is importable from the package root, e.g.
 
 ```{eval-rst}
 .. automodule:: action0.github.operations.commits
+   :members:
+```
+
+### `action0.github.operations.contents`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.contents
+   :members:
+```
+
+### `action0.github.operations.orgs`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.orgs
+   :members:
+```
+
+### `action0.github.operations.reviews`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.reviews
    :members:
 ```
 
@@ -141,6 +176,20 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.models.content`
+
+```{eval-rst}
+.. automodule:: action0.github.models.content
+   :members:
+```
+
+### `action0.github.models.org`
+
+```{eval-rst}
+.. automodule:: action0.github.models.org
+   :members:
+```
+
 ### `action0.github.models.issue`
 
 ```{eval-rst}
@@ -148,10 +197,24 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.models.milestone`
+
+```{eval-rst}
+.. automodule:: action0.github.models.milestone
+   :members:
+```
+
 ### `action0.github.models.pull`
 
 ```{eval-rst}
 .. automodule:: action0.github.models.pull
+   :members:
+```
+
+### `action0.github.models.review`
+
+```{eval-rst}
+.. automodule:: action0.github.models.review
    :members:
 ```
 

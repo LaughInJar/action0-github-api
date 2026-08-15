@@ -1,4 +1,5 @@
-"""The release models (:py:class:`Release`, :py:class:`ReleaseAsset`)."""
+"""The release models (:py:class:`Release`, :py:class:`ReleaseAsset`,
+:py:class:`ReleaseNotes`)."""
 
 from __future__ import annotations
 
@@ -74,6 +75,33 @@ class ReleaseAsset:
             created_at=timestamp(data.get("created_at")),
             updated_at=timestamp(data.get("updated_at")),
         )
+
+
+@dataclass
+class ReleaseNotes:
+    """
+    Auto-generated release notes — what
+    :py:class:`~action0.github.operations.releases.GenerateReleaseNotes`
+    returns. Nothing is published; feed the text into
+    :py:class:`~action0.github.operations.releases.CreateRelease` (or
+    let it generate the notes itself via ``generate_release_notes``).
+    """
+
+    name: str
+    """The suggested release title."""
+
+    body: str
+    """The generated notes (GitHub-flavored Markdown)."""
+
+    @classmethod
+    def from_json(cls, data: Any) -> ReleaseNotes:
+        """
+        Build release notes from one decoded JSON object.
+
+        :param data: the decoded JSON object
+        :return: the release notes
+        """
+        return cls(name=data["name"], body=data["body"])
 
 
 @dataclass
