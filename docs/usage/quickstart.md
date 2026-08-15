@@ -222,6 +222,56 @@ pull = client.send(
 print(pull.number, pull.html_url)  # the server-assigned number and URL
 ```
 
+## Releases and asset downloads
+
+{py:class}`~action0.github.operations.releases.ListReleases` lists a
+repository's releases (drafts and prereleases included, as far as the
+token may see them);
+{py:class}`~action0.github.operations.releases.GetLatestRelease`
+fetches the most recently published *full* release (drafts and
+prereleases never qualify) and
+{py:class}`~action0.github.operations.releases.GetReleaseByTag` the
+release for a git tag:
+
+```python
+from action0.github import GetLatestRelease, GetReleaseByTag, ListReleases
+
+latest = client.send(GetLatestRelease(owner="octo", repo="demo"))
+print(latest.tag_name, [a.name for a in latest.assets])
+release = client.send(GetReleaseByTag(owner="octo", repo="demo", tag="v1.0.0"))
+```
+
+{py:class}`~action0.github.operations.releases.DownloadReleaseAsset`
+downloads an asset's binary content — the one operation that is not
+JSON: it returns the response body as a
+{py:class}`~action0.req.body.BodyProducer`. On a backend opened with
+`stream=True` the body is never held in memory; each chunk is written
+out as it arrives:
+
+```python
+from action0.client.backends.requests import RequestsBackend
+from action0.github import DownloadReleaseAsset, GitHubClient
+
+with RequestsBackend(stream=True) as backend:  # a second backend, just for downloads
+    download_client = GitHubClient(backend, token="ghp_...")
+    asset = latest.assets[0]
+    producer = download_client.send(
+        DownloadReleaseAsset(owner="octo", repo="demo", asset_id=asset.id)
+    )
+    with open(asset.name, "wb") as file:
+        for chunk in producer.chunks():
+            file.write(chunk)
+```
+
+On an async backend, iterate `producer.achunks()` with `async for`
+instead. Two things to know: GitHub answers the download with a 302
+redirect to a short-lived CDN URL, so the backend must follow
+redirects (requests, aiohttp and urllib do by default, httpx needs
+`follow_redirects=True`) — and keep the `stream=True` backend separate
+from the one running JSON operations, whose `load()` reads the whole
+body anyway (see the
+[action0-client streaming guide](https://laughinjar.github.io/action0-client/usage/streaming.html)).
+
 ## Users
 
 {py:class}`~action0.github.operations.users.GetUser` fetches a public

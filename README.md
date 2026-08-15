@@ -34,9 +34,10 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, GetRepo, GetUser, GitHubClient, IssueState
-from action0.github import IssueStateReason, ListOrgRepos, ListPulls, PullStateFilter
-from action0.github import RepoSearchSort, RepoSort, SearchRepos, UpdateIssue, all_items
+from action0.github import CreateIssue, DownloadReleaseAsset, GetLatestRelease, GetRepo
+from action0.github import GetUser, GitHubClient, IssueState, IssueStateReason, ListOrgRepos
+from action0.github import ListPulls, PullStateFilter, RepoSearchSort, RepoSort
+from action0.github import SearchRepos, UpdateIssue, all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -74,6 +75,22 @@ issue = client.send(
         state_reason=IssueStateReason.COMPLETED,
     )
 )
+```
+
+Release assets download as a stream — on a `stream=True` backend the
+body is never held in memory (GitHub 302-redirects to its CDN, so the
+backend must follow redirects; most do by default):
+
+```python
+with RequestsBackend(stream=True) as backend:  # a second backend, just for downloads
+    release = client.send(GetLatestRelease(owner="octo", repo="demo"))
+    asset = release.assets[0]
+    producer = GitHubClient(backend).send(
+        DownloadReleaseAsset(owner="octo", repo="demo", asset_id=asset.id)
+    )
+    with open(asset.name, "wb") as file:
+        for chunk in producer.chunks():
+            file.write(chunk)
 ```
 
 Rate limits are handled by wrapping the backend with action0-client's

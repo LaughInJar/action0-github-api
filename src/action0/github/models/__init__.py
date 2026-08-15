@@ -12,6 +12,8 @@ from .label import Label
 from .page import Page
 from .pull import PullRequest
 from .pull import PullRequestRef
+from .release import Release
+from .release import ReleaseAsset
 from .repo import Repo
 from .search import SearchPage
 from .user import SimpleUser
@@ -25,6 +27,8 @@ __all__ = [
     "Page",
     "PullRequest",
     "PullRequestRef",
+    "Release",
+    "ReleaseAsset",
     "Repo",
     "SearchPage",
     "SimpleUser",

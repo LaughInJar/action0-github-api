@@ -21,6 +21,10 @@ from .pulls import GetPull
 from .pulls import ListPulls
 from .pulls import PullSort
 from .pulls import PullStateFilter
+from .releases import DownloadReleaseAsset
+from .releases import GetLatestRelease
+from .releases import GetReleaseByTag
+from .releases import ListReleases
 from .repos import GetRepo
 from .repos import ListOrgRepos
 from .repos import ListUserRepos
@@ -37,9 +41,12 @@ __all__ = [
     "CreateIssue",
     "CreateIssueComment",
     "CreatePull",
+    "DownloadReleaseAsset",
     "GetAuthenticatedUser",
     "GetIssue",
+    "GetLatestRelease",
     "GetPull",
+    "GetReleaseByTag",
     "GetRepo",
     "GetUser",
     "GitHubOperation",
@@ -50,6 +57,7 @@ __all__ = [
     "ListIssues",
     "ListOrgRepos",
     "ListPulls",
+    "ListReleases",
     "ListUserRepos",
     "OrgRepoType",
     "PaginatedOperation",

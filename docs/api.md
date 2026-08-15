@@ -65,6 +65,13 @@ Everything below is importable from the package root, e.g.
    :members:
 ```
 
+### `action0.github.operations.releases`
+
+```{eval-rst}
+.. automodule:: action0.github.operations.releases
+   :members:
+```
+
 ### `action0.github.operations.search`
 
 ```{eval-rst}
@@ -131,6 +138,13 @@ Everything below is importable from the package root, e.g.
 
 ```{eval-rst}
 .. automodule:: action0.github.models.pull
+   :members:
+```
+
+### `action0.github.models.release`
+
+```{eval-rst}
+.. automodule:: action0.github.models.release
    :members:
 ```
 

@@ -21,6 +21,8 @@ from .models import Label
 from .models import Page
 from .models import PullRequest
 from .models import PullRequestRef
+from .models import Release
+from .models import ReleaseAsset
 from .models import Repo
 from .models import SearchPage
 from .models import SimpleUser
@@ -28,9 +30,12 @@ from .models import User
 from .operations import CreateIssue
 from .operations import CreateIssueComment
 from .operations import CreatePull
+from .operations import DownloadReleaseAsset
 from .operations import GetAuthenticatedUser
 from .operations import GetIssue
+from .operations import GetLatestRelease
 from .operations import GetPull
+from .operations import GetReleaseByTag
 from .operations import GetRepo
 from .operations import GetUser
 from .operations import GitHubOperation
@@ -41,6 +46,7 @@ from .operations import ListIssueComments
 from .operations import ListIssues
 from .operations import ListOrgRepos
 from .operations import ListPulls
+from .operations import ListReleases
 from .operations import ListUserRepos
 from .operations import OrgRepoType
 from .operations import PaginatedOperation
@@ -65,10 +71,13 @@ __all__ = [
     "CreateIssue",
     "CreateIssueComment",
     "CreatePull",
+    "DownloadReleaseAsset",
     "GITHUB_CONDITIONAL_POLICY",
     "GetAuthenticatedUser",
     "GetIssue",
+    "GetLatestRelease",
     "GetPull",
+    "GetReleaseByTag",
     "GetRepo",
     "GetUser",
     "GitHubClient",
@@ -85,6 +94,7 @@ __all__ = [
     "ListIssues",
     "ListOrgRepos",
     "ListPulls",
+    "ListReleases",
     "ListUserRepos",
     "OrgRepoType",
     "Page",
@@ -93,6 +103,8 @@ __all__ = [
     "PullRequestRef",
     "PullSort",
     "PullStateFilter",
+    "Release",
+    "ReleaseAsset",
     "Repo",
     "RepoSearchSort",
     "RepoSort",
