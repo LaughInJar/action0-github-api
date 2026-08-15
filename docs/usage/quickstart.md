@@ -238,6 +238,63 @@ pull = client.send(
 print(pull.number, pull.html_url)  # the server-assigned number and URL
 ```
 
+## Commits
+
+{py:class}`~action0.github.operations.commits.ListCommits` lists a
+repository's commits, newest first — filterable by starting ref, author,
+time window and touched path (the latter is `file_path` here because
+GitHub's parameter name, `path`, is the operation's path template; it is
+sent as `path` on the wire). Each commit carries both the git-level
+identities (`git_author`/`git_committer` — name, email, date as recorded
+in the commit) and the GitHub accounts matched to them (`author`/
+`committer` — `None` when the email maps to no account):
+
+```python
+from datetime import datetime, timezone
+from action0.github import ListCommits
+
+commits = client.send(
+    ListCommits(
+        owner="python",
+        repo="peps",
+        file_path="pep-0008.txt",
+        since=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    )
+)
+for c in commits:  # one Page — follow .next for more
+    print(c.sha[:7], c.author.login if c.author else c.git_author.name if c.git_author else "?")
+```
+
+{py:class}`~action0.github.operations.commits.GetCommit` fetches one
+commit — by sha, branch or tag name — including the diff statistics and
+files the listings omit:
+
+```python
+from action0.github import GetCommit
+
+commit = client.send(GetCommit(owner="python", repo="peps", ref="main"))
+print(commit.additions, commit.deletions)  # only GetCommit carries these
+print([(f.status, f.filename) for f in commit.files or []])
+```
+
+{py:class}`~action0.github.operations.commits.CompareCommits` compares
+two refs — GitHub's three-dot comparison, measuring `head` against the
+merge base like `git log base...head`. The endpoint's combined
+`{base}...{head}` path segment stays two typed fields here, joined by
+the path template:
+
+```python
+from action0.github import CompareCommits
+
+diff = client.send(CompareCommits(owner="octo", repo="demo", base="main", head="topic"))
+print(diff.status, diff.ahead_by, diff.behind_by)  # e.g. ComparisonStatus.AHEAD 2 0
+print([f.filename for f in diff.files])
+```
+
+`diff.commits` is capped at 250 (`total_commits` has the real count) and
+`diff.files` at 300 — for bigger ranges, list commits page by page via
+`ListCommits(sha="topic")`.
+
 ## Releases and asset downloads
 
 {py:class}`~action0.github.operations.releases.ListReleases` lists a

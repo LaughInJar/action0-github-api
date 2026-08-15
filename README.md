@@ -34,10 +34,11 @@ uv add "action0-github-api[httpx]"     # or [requests], [aiohttp], [urllib3], [t
 
 ```python
 from action0.client.backends.requests import RequestsBackend
-from action0.github import CreateIssue, DownloadReleaseAsset, GetLatestRelease, GetRateLimit
-from action0.github import GetRepo, GetUser, GitHubClient, IssueState, IssueStateReason
-from action0.github import ListOrgRepos, ListPulls, PullStateFilter, RepoSearchSort, RepoSort
-from action0.github import SearchRepos, UpdateIssue, all_items
+from action0.github import CompareCommits, CreateIssue, DownloadReleaseAsset, GetLatestRelease
+from action0.github import GetRateLimit, GetRepo, GetUser, GitHubClient, IssueState
+from action0.github import IssueStateReason, ListCommits, ListOrgRepos, ListPulls
+from action0.github import PullStateFilter, RepoSearchSort, RepoSort, SearchRepos, UpdateIssue
+from action0.github import all_items
 
 with RequestsBackend() as backend:
     client = GitHubClient(backend)  # token="ghp_..." for higher rate limits
@@ -52,6 +53,12 @@ with RequestsBackend() as backend:
 
     pulls = client.send(ListPulls(owner="python", repo="peps", state=PullStateFilter.OPEN))
     print([p.title for p in pulls if not p.draft])  # p.head/p.base name the branches
+
+    commits = client.send(ListCommits(owner="python", repo="peps", file_path="pep-0008.txt"))
+    print([c.message.splitlines()[0] for c in commits])  # newest first
+
+    diff = client.send(CompareCommits(owner="python", repo="peps", base="main", head="topic"))
+    print(diff.status, diff.ahead_by, [f.filename for f in diff.files])
 
     user = client.send(GetUser(username="gvanrossum"))
     print(user.name, user.followers)
